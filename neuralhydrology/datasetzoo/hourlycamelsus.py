@@ -171,6 +171,7 @@ def load_hourly_us_forcings(data_dir: Path, basin: str, forcings: str) -> pd.Dat
         Path to the CAMELS US directory. This folder must contain an 'hourly' folder containing one subdirectory
         for each forcing, which contains the forcing files (.csv) for each basin. Files have to contain the 8-digit 
         basin id.
+        If using AORC forcing data, add these to the 'hourly' folder: https://doi.org/10.4211/hs.c738c05278a34bc9848dd14d61cffab9
     basin : str
         8-digit USGS identifier of the basin.
     forcings : str
@@ -192,7 +193,17 @@ def load_hourly_us_forcings(data_dir: Path, basin: str, forcings: str) -> pd.Dat
     else:
         raise FileNotFoundError(f'No file for Basin {basin} at {forcing_path}')
 
-    return pd.read_csv(file_path, index_col=['date'], parse_dates=['date'])
+    # Handle different header types for NLDAS and AORC
+    if forcings == 'nldas_hourly':
+        df = pd.read_csv(file_path, index_col=['date'], parse_dates=['date'])
+    elif forcings == 'aorc_hourly':
+        df = pd.read_csv(file_path, index_col='time', parse_dates=['time'])
+        df.index = df.index.floor('s')  # Adjust precision to seconds
+        df.index.rename('date', inplace=True)  # Rename 'time' to 'date'
+    else:
+        raise ValueError(f"Unknown forcing type: {forcings}")
+
+    return df
 
 
 def load_hourly_us_discharge(data_dir: Path, basin: str) -> pd.DataFrame:
