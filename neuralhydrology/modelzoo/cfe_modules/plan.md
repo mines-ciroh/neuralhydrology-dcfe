@@ -1,0 +1,2 @@
+ - @Daniel Todo: make a list of all functions in old cfe_module.py
+ - Figure out order of implementation.
