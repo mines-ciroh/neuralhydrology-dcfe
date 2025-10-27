@@ -107,6 +107,7 @@ class RoutingInfo:
         return torch.ones((self.batch_size, self.num_ordinates + 1), dtype=torch.float32, device=self.device)
 
 
+# ToDo: How to handle hourly vs daily cases?
 TIME = {
     "step_size": 3600 if hourly else 3600 * 24,  # num of [seconds]
     "hrs": (3600 if hourly else 3600 * 24) / 3600,  # num of [hours]
@@ -119,3 +120,23 @@ PHYSICS_CONSTANTS = {
 }
 
 CONSTANTS = {"time": TIME, "physics": PHYSICS_CONSTANTS}  # note we've moved cfe_scheme to cfe_params
+
+INITIAL_STATES = {
+    "gw_reservoir_storage_m": 0.5,
+    "soil_reservoir_storage_m": 0.6,
+    "first_nash_storage": 0.0,
+}
+
+
+PARAMETER_RANGES = {
+    "satdk": [0.0, 0.000726],  # Saturated hydraulic conductivity [m/hr]
+    "Cgw": [0.0000018, 0.0018],  # Primary groundwater reservoir constant [m/hr]
+    "bb": [0, 21.94],  # exponent on Clapp-Hornberg functin [-]
+    "smcmax": [0.20554, 1],  # Max soil moisture content [m3/hr3]
+    "slop": [0, 1],  # slope coefficient [-]
+    "max_gw_storage": [0.01, 0.25],  # [m]
+    "expon": [1, 8],  # A primary groundwater nonlinear reservoir exponential constant [-]
+    "K_lf": [0, 1],  # Lateral flow coefficient
+    "K_nash": [0, 1],  # Nash cascade discharge coefficient
+    "satpsi": [0.05, 0.95],
+}

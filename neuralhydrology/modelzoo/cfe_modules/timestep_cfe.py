@@ -24,7 +24,7 @@ def timestep_cfe(
     soil_reservoir: SoilStates,
     routing_info: RoutingInfo,
     constants=CONSTANTS,
-):
+):  # enumerate what this returns. If cfe_params is not modified by this function, do not return it.
     ## INITIALIZE
     cfe_params, gw_reservoir, soil_reservoir = timestep_basin_constants(
         conceptual_forcing_timestep=x_conceptual_timestep,
