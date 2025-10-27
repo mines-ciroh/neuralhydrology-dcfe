@@ -79,10 +79,17 @@ class GroundwaterStates:
     def __init__(self, device: str, batch_size: int, cfe_params: CFEParams):
         self.device = device
         self.batch_size = batch_size
-        # suggest we add the logic from lines 145--150 of CFE_modules.py here to initialize groundwater states. Also, are there any additional states?
+        ones_tensor = torch.ones(batch_size, dtype=torch.float32, device=device)
+        self.storage_m = 0.05 * ones_tensor.clone()
+        self.storage_max_m = cfe_params.basin_characteristics.max_gw_storage
+        self.coeff_primary = cfe_params.basin_characteristics.Cgw
+        self.exponent_primary = cfe_params.basin_characteristics.expon
+        assert self.storage_max_m.shape[0] == self.batch_size
+        assert self.coeff_primary.shape[0] == self.batch_size
+        assert self.exponent_primary.shape[0] == self.batch_size
 
 
-class SoilStates:
+class SoilStates: #new soil_reservoir class
     def __init__(self, device: str, batch_size: int, cfe_params: CFEParams, soil_config: SoilConfig):
         self.device = device
         self.batch_size = batch_size
@@ -90,8 +97,9 @@ class SoilStates:
         # suggest we add the logic from lines 155--160 of CFE_modules.py here to initialize soil states.
 
 
+
 class SoilConfig:
-    # @Ziyu let's discuss the function of this guy. Perhaps we can eliminate it?
+    def __init__(self, cfe_params: CFEParams, constants = CONSTANTS):
     pass
 
 

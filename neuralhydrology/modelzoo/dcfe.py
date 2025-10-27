@@ -66,7 +66,7 @@ class DCFE(BaseConceptualModel):
             )
 
             ## FINALIZE
-            states, out = self._store_timestep_information(k, flux, gw_reservoir, soil_reservoir, states, out)
+            states, out = self._store_timestep_information(k, flux, gw_reservoir, soil_reservoir, routing_info, states, out)
 
         return {"y_hat": out, "parameters": tensor_of_dynamic_params, "internal_states": states}
 
