@@ -12,9 +12,8 @@ def calculate_evaporation_from_rainfall(flux: Flux) -> Flux:
         pet = flux.potential_et_m_per_timestep[rainfall_mask]
 
         # UPDATE
-        # If rainfall exceeds PET, actual ET is equal to PET.
-        # Otherwise, actual ET equals potential ET.
-        # DM: I don't understand this sentence.
+        # If rainfall exceeds PET, actual ET = PET.
+        # Otherwise, actual ET equals rainfall.
         actual_et_from_rain = torch.where(rainfall >= pet, pet, rainfall)
 
         reduced_rainfall = torch.where(rainfall >= pet, rainfall - actual_et_from_rain, torch.zeros_like(rainfall))

@@ -27,7 +27,18 @@ def calculate_evaporation_from_soil(flux: Flux, soil_reservoir: SoilStates, cons
             reduced_pet[storage_threshold_mask], soil_storage[storage_threshold_mask] - wilting_point[storage_threshold_mask]
         )
 
-        # IF soil_storage < storage_threshold_primary_m:
-        Budyko_numerator = soil_storage[~storage_threshold_mask] - wilting_point[~storage_threshold_mask]  # STOPPED HERE.
+        # If soil_storage < storage_threshold_primary_m:
+        Budyko_numerator = soil_storage[~storage_threshold_mask] - wilting_point[~storage_threshold_mask]
+        Budyko_denominator = storage_threshold_prim[~storage_threshold_mask] - wilting_point[~storage_threshold_mask]
+        Budyko_ratio = Budyko_numerator / Budyko_denominator
+        actual_et_soil[~storage_threshold_mask] = torch.min(
+            reduced_pet[~storage_threshold_mask] * Budyko_ratio, soil_storage[~storage_threshold_mask]
+        )
+
+        # FINALIZE
+        flux.actual_et_from_soil_m_per_timestep[soil_wilting_mask & reduced_pet_mask] = actual_et_soil
+        soil_reservoir.storage_m -= flux.actual_et_from_soil_m_per_timestep
+        flux.reduced_potential_et_m_per_timestep -= flux.actual_et_from_soil_m_per_timestep
+        flux.actual_et_m_per_timestep += flux.actual_et_from_soil_m_per_timestep
 
     return flux, soil_reservoir

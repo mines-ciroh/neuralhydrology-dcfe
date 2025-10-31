@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any, Dict
 
 import torch
 
@@ -31,18 +32,39 @@ class BasinCharacteristics:
     alpha_fc: float
     K_nash: float
     K_lf: float
-    nash_storage: int  # is this the right type?
+    nash_storage: list[int]  # is this the right type?
     giuh_ordinates: list[int]
 
 
-@dataclass
 class CFEParams:
-    soil_params: SoilParams
-    basin_characteristics: BasinCharacteristics
-    hourly: bool = False
-    dcfe_soil_scheme: str = "classic"
-    dcfe_partition_scheme: str = "Schaake"
-    slop: float = None # where should this live? Previously in timestep_params.
+    def __init__(
+        self,
+        soil_params: SoilParams,
+        basin_characteristics: BasinCharacteristics,
+        hourly: bool = False,
+        dcfe_soil_scheme: str = "classic",
+        dcfe_partition_scheme: str = "Schaake",
+    ):
+        self.soil_params = soil_params
+        self.basin_characteristics = basin_characteristics
+        self.hourly = hourly
+        self.dcfe_soil_scheme = dcfe_soil_scheme
+        self.dcfe_partition_scheme = dcfe_partition_scheme
+
+    def update(self, timestep_params: torch.Tensor, time_step: int):
+        """
+        This mimics the functionality of timestep_basin_constants in the original CFE_modules.py.
+        """
+        self.soil_params.bb = timestep_params["bb"][:, time_step]
+        self.soil_params.satdk = timestep_params["satdk"][:, time_step]
+        self.soil_params.slop = timestep_params["slop"][:, time_step]
+        self.soil_params.smcmax = timestep_params["smcmax"][:, time_step]
+        self.soil_params.satpsi = timestep_params["satpsi"][:, time_step]
+        self.basin_characteristics.Cgw = timestep_params["Cgw"][:, time_step]
+        self.basin_characteristics.max_gw_storage = timestep_params["max_gw_storage"][:, time_step]
+        self.basin_characteristics.expon = timestep_params["expon"][:, time_step]
+        self.basin_characteristics.K_lf = timestep_params["K_lf"][:, time_step]
+        self.basin_characteristics.K_nash = timestep_params["K_nash"][:, time_step]
 
 
 class Flux:
@@ -92,63 +114,70 @@ class GroundwaterStates:
         assert self.exponent_primary.shape[0] == self.batch_size
 
 
-class SoilStates: #new soil_reservoir class
-    def __init__(self, device: str, batch_size: int, cfe_params: CFEParams, soil_config: SoilConfig, constants = CONSTANTS):
+class SoilStates:  # new soil_reservoir class
+    def __init__(self, device: str, batch_size: int, cfe_params: CFEParams, soil_config: SoilConfig, constants=CONSTANTS):
         self.device = device
         self.batch_size = batch_size
         self.soil_moisture_content = torch.zeros(batch_size, dtype=torch.float32, device=device)
         self.wilting_point_m = cfe_params.soil_params.wltsmc * cfe_params.soil_params.D
         self.storage_max_m = cfe_params.soil_params.smcmax * cfe_params.soil_params.D
-        self.exponent_primary = 1.0 # Why hardcoded?
+        self.exponent_primary = 1.0  # Why hardcoded?
         self.storage_threshold_primary_m = soil_config.field_capacity_threshold_primary_m
-        self.coeff_primary = cfe_params.soil_params.satdk*cfe_params.slop*constants.time.step_size
+        self.coeff_primary = cfe_params.soil_params.satdk * cfe_params.slop * constants.time.step_size
         self.coeff_secondary = cfe_params.basin_characteristics.K_lf
         self.exponent_secondary = 1.0
         self.storage_threshold_secondary_m = soil_config.lateral_flow_threshold_storage_m
-        self.storage_m = 0.05*torch.ones(batch_size, dtype=torch.float32, device=device) # initialize soil storage
+        self.storage_m = 0.05 * torch.ones(batch_size, dtype=torch.float32, device=device)  # initialize soil storage
         assert self.wilting_point_m.shape[0] == self.batch_size
         assert self.storage_max_m.shape[0] == self.batch_size
 
         # suggest we add the logic from lines 155--160 of CFE_modules.py here to initialize soil states.
 
 
-
 class SoilConfig:
-    def __init__(self, cfe_params: CFEParams, constants = CONSTANTS):
-    pass
+    def __init__(self, cfe_params: CFEParams, device: str, batch_size: int, constants: Dict[str, Any]):
+        self.cfe_params = cfe_params
+        self.device = device
+        self.batch_size = batch_size
+        self.constants = constants
+
+        # Compute
+        trigger_z_m = 0.5 * torch.ones(batch_size, dtype=torch.float32, device=device)  # assuming uniform depth of 0.5 m
+        field_capacity_atm_press_fraction = cfe_params.basin_characteristics.alpha_fc
+        # Soil outflux calculation, Eq. 3
+        H_water_table_m = (
+            field_capacity_atm_press_fraction
+            * constants["physics"]["atm_press_Pa"]
+            / constants["physics"]["unit_weight_water_N_per_m3"]
+        )
+        Omega = H_water_table_m - trigger_z_m
+
+        # upper & lower limit of the integral in Eq. 4
+        lower_lim = torch.pow(Omega, (1.0 - 1.0 / cfe_params.soil_params.bb)) / (1.0 - 1.0 / cfe_params.soil_params.bb)
+        upper_lim = torch.pow(Omega + cfe_params.soil_params.D, (1.0 - 1.0 / cfe_params.soil_params.bb)) / (
+            1.0 - 1.0 / cfe_params.soil_params.bb
+        )
+
+        # integral & power term in Eq. 4 and 5
+        storage_thresh_pow_term = torch.pow(1.0 / cfe_params.soil_params.satpsi, (-1.0 / cfe_params.soil_params.bb))
+        lim_diff = upper_lim - lower_lim
+
+        # FINALIZE
+        self.field_capacity_storage_threshold_m = cfe_params.soil_params.smcmax * storage_thresh_pow_term * lim_diff
+        self.lateral_flow_threshold_storage_m = self.field_capacity_storage_threshold_m.clone()
 
 
-@dataclass
 class RoutingInfo:
-    device: str = "cpu"
-    batch_size: int
-    num_ordinates: int
-    num_reservoirs: int = 2  # do we even need to worry about non-default values?
+    def __init__(self, device: str, batch_size: int, cfe_params: CFEParams):
+        self.device = device
+        self.batch_size = batch_size
+        self.num_ordinates = cfe_params.basin_characteristics.giuh_ordinates.shape[1]
+        self.num_reservoirs = cfe_params.basin_characteristics.nash_storage.shape[1]
+        self.runoff_queue_m_per_timestep = torch.ones((batch_size, self.num_ordinates + 1), dtype=torch.float32, device=device)
 
     @property
     def runoff_queue_per_timestep(self) -> torch.Tensor:
-        return torch.ones((self.batch_size, self.num_ordinates + 1), dtype=torch.float32, device=self.device)
-
-
-# ToDo: How to handle hourly vs daily cases?
-TIME = {
-    "step_size": 3600 if hourly else 3600 * 24,  # num of [seconds]
-    "hrs": (3600 if hourly else 3600 * 24) / 3600,  # num of [hours]
-    "days": ((3600 if hourly else 3600 * 24) / 3600) / 24,  # time step in [days]
-}
-
-PHYSICS_CONSTANTS = {
-    "atm_press_Pa": 101325.0,  # [Pa]
-    "unit_weight_water_N_per_m3": 9810.0,  # [N/m3]
-}
-
-CONSTANTS = {"time": TIME, "physics": PHYSICS_CONSTANTS}  # note we've moved cfe_scheme to cfe_params
-
-INITIAL_STATES = {
-    "gw_reservoir_storage_m": 0.5,
-    "soil_reservoir_storage_m": 0.6,
-    "first_nash_storage": 0.0,
-}
+        return self.runoff_queue_m_per_timestep
 
 
 PARAMETER_RANGES = {
@@ -163,3 +192,25 @@ PARAMETER_RANGES = {
     "K_nash": [0, 1],  # Nash cascade discharge coefficient
     "satpsi": [0.05, 0.95],
 }
+
+INITIAL_STATES = {
+    "gw_reservoir_storage_m": 0.5,
+    "soil_reservoir_storage_m": 0.6,
+    "first_nash_storage": 0.0,
+}
+
+
+def get_constants(hourly: bool):
+    TIME = {
+        "step_size": 3600 if hourly else 3600 * 24,  # num of [seconds]
+        "hrs": (3600 if hourly else 3600 * 24) / 3600,  # num of [hours]
+        "days": ((3600 if hourly else 3600 * 24) / 3600) / 24,  # time step in [days]
+    }
+
+    PHYSICS_CONSTANTS = {
+        "atm_press_Pa": 101325.0,  # [Pa]
+        "unit_weight_water_N_per_m3": 9810.0,  # [N/m3]
+    }
+
+    CONSTANTS = {"time": TIME, "physics": PHYSICS_CONSTANTS}  # note we've moved cfe_scheme to cfe_params
+    return CONSTANTS
