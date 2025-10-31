@@ -86,6 +86,8 @@ class Flux:
         self.secondary_flux_m = zero_tensor.clone()
         self.primary_flux_from_gw_m = zero_tensor.clone()
         self.secondary_flux_from_gw_m = zero_tensor.clone()
+        self.flux_perc_m = zero_tensor.clone()
+        self.flux_lat_m = zero_tensor.clone()
         self.giuh_runoff_m = zero_tensor.clone()
         self.nash_lateral_runoff_m = zero_tensor.clone()
         self.from_deep_gw_to_chan_m = zero_tensor.clone()

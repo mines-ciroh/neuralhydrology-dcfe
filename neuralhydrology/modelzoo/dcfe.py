@@ -6,7 +6,6 @@ from neuralhydrology.modelzoo.baseconceptualmodel import BaseConceptualModel
 from neuralhydrology.modelzoo.cfe_modules.cfe_dataclasses import (
     INITIAL_STATES,
     PARAMETER_RANGES,
-    Flux,
     GroundwaterStates,
     RoutingInfo,
     SoilConfig,
@@ -55,7 +54,6 @@ class DCFE(BaseConceptualModel):
             constants=self.constants,
         )
         routing_info = RoutingInfo(device=device, batch_size=batch_size, cfe_params=self.cfe_params)
-        flux = Flux(device=device, batch_size=batch_size)
 
         ## Spinup CFE module. Do not track gradients.
         with torch.no_grad():
@@ -69,7 +67,6 @@ class DCFE(BaseConceptualModel):
                     gw_reservoir=gw_reservoir,
                     soil_reservoir=soil_reservoir,
                     routing_info=routing_info,
-                    flux=flux,
                 )
 
                 ##FINALIZE
@@ -87,7 +84,6 @@ class DCFE(BaseConceptualModel):
                 gw_reservoir=gw_reservoir,
                 soil_reservoir=soil_reservoir,
                 routing_info=routing_info,
-                flux=flux,
             )
 
             ## FINALIZE
