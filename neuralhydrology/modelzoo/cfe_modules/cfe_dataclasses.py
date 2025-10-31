@@ -114,26 +114,6 @@ class GroundwaterStates:
         assert self.exponent_primary.shape[0] == self.batch_size
 
 
-class SoilStates:  # new soil_reservoir class
-    def __init__(self, device: str, batch_size: int, cfe_params: CFEParams, soil_config: SoilConfig, constants=CONSTANTS):
-        self.device = device
-        self.batch_size = batch_size
-        self.soil_moisture_content = torch.zeros(batch_size, dtype=torch.float32, device=device)
-        self.wilting_point_m = cfe_params.soil_params.wltsmc * cfe_params.soil_params.D
-        self.storage_max_m = cfe_params.soil_params.smcmax * cfe_params.soil_params.D
-        self.exponent_primary = 1.0  # Why hardcoded?
-        self.storage_threshold_primary_m = soil_config.field_capacity_threshold_primary_m
-        self.coeff_primary = cfe_params.soil_params.satdk * cfe_params.slop * constants.time.step_size
-        self.coeff_secondary = cfe_params.basin_characteristics.K_lf
-        self.exponent_secondary = 1.0
-        self.storage_threshold_secondary_m = soil_config.lateral_flow_threshold_storage_m
-        self.storage_m = 0.05 * torch.ones(batch_size, dtype=torch.float32, device=device)  # initialize soil storage
-        assert self.wilting_point_m.shape[0] == self.batch_size
-        assert self.storage_max_m.shape[0] == self.batch_size
-
-        # suggest we add the logic from lines 155--160 of CFE_modules.py here to initialize soil states.
-
-
 class SoilConfig:
     def __init__(self, cfe_params: CFEParams, device: str, batch_size: int, constants: Dict[str, Any]):
         self.cfe_params = cfe_params
@@ -165,6 +145,32 @@ class SoilConfig:
         # FINALIZE
         self.field_capacity_storage_threshold_m = cfe_params.soil_params.smcmax * storage_thresh_pow_term * lim_diff
         self.lateral_flow_threshold_storage_m = self.field_capacity_storage_threshold_m.clone()
+
+
+class SoilStates:  # new soil_reservoir class
+    def __init__(self, device: str, batch_size: int, cfe_params: CFEParams, soil_config: SoilConfig, constants: Dict[str, Any]):
+        self.device = device
+        self.batch_size = batch_size
+        self.soil_moisture_content = torch.zeros(batch_size, dtype=torch.float32, device=device)
+        self.wilting_point_m = cfe_params.soil_params.wltsmc * cfe_params.soil_params.D
+        self.storage_max_m = cfe_params.soil_params.smcmax * cfe_params.soil_params.D
+        self.exponent_primary = 1.0  # Why hardcoded?
+        self.storage_threshold_primary_m = soil_config.field_capacity_threshold_primary_m
+        self.coeff_primary = cfe_params.soil_params.satdk * cfe_params.slop * constants.time.step_size
+        self.coeff_secondary = cfe_params.basin_characteristics.K_lf
+        self.exponent_secondary = 1.0
+        self.storage_threshold_secondary_m = soil_config.lateral_flow_threshold_storage_m
+        self.storage_m = 0.05 * torch.ones(batch_size, dtype=torch.float32, device=device)  # initialize soil storage
+        self.storage_deficit_m = cfe_params.soil_params.smcmax * cfe_params.soil_params.D - self.storage_m
+        self.Schaake_adjusted_magic_constant_by_soil_type = (
+            cfe_params.basin_characteristics.refkdt * cfe_params.soil_params.satdk / 2.0e-6
+        )
+
+    def update(self, cfe_params: CFEParams):
+        self.storage_deficit_m = cfe_params.soil_params.smcmax * cfe_params.soil_params.D - self.storage_m
+        self.Schaake_adjusted_magic_constant_by_soil_type = (
+            cfe_params.basin_characteristics.refkdt * cfe_params.soil_params.satdk / 2.0e-6
+        )
 
 
 class RoutingInfo:
