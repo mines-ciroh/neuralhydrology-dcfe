@@ -67,6 +67,8 @@ class Flux:
         self.nash_lateral_runoff_m = zero_tensor.clone()
         self.from_deep_gw_to_chan_m = zero_tensor.clone()
         self.tension_water_m = zero_tensor.clone()
+        self.timestep_rainfall_input_m = zero_tensor.clone()
+        self.potential_et_m_per_timestep = zero_tensor.clone()
         self.Qout_m = zero_tensor.clone()
 
     def reset_fluxes(self):
