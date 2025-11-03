@@ -59,7 +59,14 @@ class DCFE(BaseConceptualModel):
         with torch.no_grad():
             for j in range(0, self.cfg.spin_up):
                 if self.cfg.dcfe_predict_config == "dynamic":
+                    ## INITIALIZE
+                    # update parameters dependent uon the lstm output.
                     self.cfe_params.update(dynamic_parameters, j)
+                    gw_reservoir.update(self.cfe_params)
+                    soil_config = SoilConfig(
+                        cfe_params=self.cfe_params, device=device, batch_size=batch_size, constants=self.constants
+                    )
+                    soil_reservoir.update(self.cfe_params, soil_config)
 
                 gw_reservoir, soil_reservoir, routing_info, flux = timestep_cfe(
                     x_conceptual_timestep=x_conceptual[:, j, :],
@@ -76,6 +83,11 @@ class DCFE(BaseConceptualModel):
         for k in range(self.cfg.spin_up, lstm_out.shape[1]):
             if self.cfg.dcfe_predict_config == "dynamic":
                 self.cfe_params.update(dynamic_parameters, k)
+                gw_reservoir.update(self.cfe_params)
+                soil_config = SoilConfig(
+                    cfe_params=self.cfe_params, device=device, batch_size=batch_size, constants=self.constants
+                )
+                soil_reservoir.update(self.cfe_params, soil_config)
 
             ## UPDATE
             gw_reservoir, soil_reservoir, routing_info, flux = timestep_cfe(

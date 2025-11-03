@@ -115,6 +115,14 @@ class GroundwaterStates:
         assert self.coeff_primary.shape[0] == self.batch_size
         assert self.exponent_primary.shape[0] == self.batch_size
 
+    def update(self, cfe_params: CFEParams):
+        """
+        This mimics the functionality of timestep_basin_constants in the original CFE_modules.py.
+        """
+        self.storage_max_m = cfe_params.basin_characteristics.max_gw_storage
+        self.coeff_primary = cfe_params.basin_characteristics.Cgw
+        self.exponent_primary = cfe_params.basin_characteristics.expon
+
 
 class SoilConfig:
     def __init__(self, cfe_params: CFEParams, device: str, batch_size: int, constants: Dict[str, Any]):
@@ -157,8 +165,8 @@ class SoilStates:  # new soil_reservoir class
         self.wilting_point_m = cfe_params.soil_params.wltsmc * cfe_params.soil_params.D
         self.storage_max_m = cfe_params.soil_params.smcmax * cfe_params.soil_params.D
         self.exponent_primary = 1.0  # Why hardcoded?
-        self.storage_threshold_primary_m = soil_config.field_capacity_threshold_primary_m
-        self.coeff_primary = cfe_params.soil_params.satdk * cfe_params.slop * constants.time.step_size
+        self.storage_threshold_primary_m = soil_config.field_capacity_storage_threshold_m
+        self.coeff_primary = cfe_params.soil_params.satdk * cfe_params.slop * self.constants["time"]["step_size"]
         self.coeff_secondary = cfe_params.basin_characteristics.K_lf
         self.exponent_secondary = 1.0
         self.storage_threshold_secondary_m = soil_config.lateral_flow_threshold_storage_m
@@ -168,7 +176,15 @@ class SoilStates:  # new soil_reservoir class
             cfe_params.basin_characteristics.refkdt * cfe_params.soil_params.satdk / 2.0e-6
         )
 
-    def update(self, cfe_params: CFEParams):
+    def update(self, cfe_params: CFEParams, soil_config: SoilConfig):
+        """
+        This mimics the functionality of timestep_basin_constants in the original CFE_modules.py. Note that we only update quantities that depend on cfe_params which are changing (see CFEParams.update()).
+        """
+        self.storage_max_m = cfe_params.soil_params.smcmax * cfe_params.soil_params.D
+        self.storage_threshold_primary_m = soil_config.field_capacity_storage_threshold_m
+        self.coeff_primary = cfe_params.soil_params.satdk * cfe_params.soil_params.slop * self.constants["time"]["step_size"]
+        self.storage_threshold_secondary_m = soil_config.lateral_flow_threshold_storage_m
+        self.coeff_secondary = cfe_params.basin_characteristics.K_lf
         self.storage_deficit_m = cfe_params.soil_params.smcmax * cfe_params.soil_params.D - self.storage_m
         self.Schaake_adjusted_magic_constant_by_soil_type = (
             cfe_params.basin_characteristics.refkdt * cfe_params.soil_params.satdk / 2.0e-6
