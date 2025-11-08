@@ -35,7 +35,7 @@ def get_default_params(cfg: Config, additional_features: torch.Tensor, device: s
         soil_params=soil_params,
         basin_characteristics=basin_characteristics,
         hourly=cfg.dcfe_hourly,
-        soil_scheme=cfg.dcfe_soil_scheme,
-        partition_scheme=cfg.dcfe_partition_scheme,
+        dcfe_soil_scheme=cfg.dcfe_soil_scheme,
+        dcfe_partition_scheme=cfg.dcfe_partition_scheme,
     )
     return cfe_params

@@ -260,6 +260,41 @@ class Config(object):
 
         return cfg
 
+#_____new for dCFE_____
+#    @property
+#    def param_dir(self) -> Path:
+#        return self._cfg.get("param_dir", None)
+    
+    @property
+    def dcfe_hourly(self) -> bool:
+        return self._cfg.get("dcfe_hourly", False)
+    
+#    @property
+#    def calibrated_params_path(self) -> Path:
+#        return self._cfg.get("calibrated_params_path", None)
+    
+#    @property
+#    def spin_up(self) -> int:
+#        return self._cfg.get("spin_up", 0)
+    
+    @property
+    def dcfe_soil_scheme(self) -> str:
+        return self._cfg.get("dcfe_soil_scheme", "classic")
+    
+    @property
+    def dcfe_partition_scheme(self) -> str:
+        return self._cfg.get("dcfe_partition_scheme", "Schaake")
+    
+#    @property
+#    def dcfe_spinup_config(self) -> dict:
+#        return self._cfg.get("dcfe_spinup_config", "calibrated")
+    
+#    @property
+#    def dcfe_predict_config(self) -> dict:
+#        return self._cfg.get("dcfe_predict_config", "average")
+    
+    #____end of new for dCFE____
+    
     @property
     def additional_feature_files(self) -> List[Path]:
         return self._as_default_list(self._cfg.get("additional_feature_files", None))

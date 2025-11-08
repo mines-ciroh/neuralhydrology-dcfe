@@ -166,7 +166,7 @@ class SoilStates:  # new soil_reservoir class
         self.storage_max_m = cfe_params.soil_params.smcmax * cfe_params.soil_params.D
         self.exponent_primary = 1.0  # Why hardcoded?
         self.storage_threshold_primary_m = soil_config.field_capacity_storage_threshold_m
-        self.coeff_primary = cfe_params.soil_params.satdk * cfe_params.slop * self.constants["time"]["step_size"]
+        self.coeff_primary = cfe_params.soil_params.satdk * cfe_params.soil_params.slop * self.constants["time"]["step_size"]
         self.coeff_secondary = cfe_params.basin_characteristics.K_lf
         self.exponent_secondary = 1.0
         self.storage_threshold_secondary_m = soil_config.lateral_flow_threshold_storage_m
