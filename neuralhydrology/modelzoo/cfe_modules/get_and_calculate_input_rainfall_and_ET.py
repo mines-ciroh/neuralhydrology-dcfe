@@ -1,14 +1,17 @@
 import torch
 
-from neuralhydrology.modelzoo.cfe_modules.cfe_dataclasses import CONSTANTS, CFEParams, Flux
+from neuralhydrology.modelzoo.cfe_modules.cfe_dataclasses import CFEParams, Flux
 
 
 def get_and_calculate_input_rainfall_and_ET(
-    conceptual_forcing_timestep, flux: Flux, cfe_params: CFEParams, constants=CONSTANTS
+    conceptual_forcing_timestep, flux: Flux, cfe_params: CFEParams, constants=constants
 ) -> Flux:
     """
-    Comments and function description go here.
     calculate PET from shortwave radiation and mean temperature using jensen_evaporation_2016 "https://github.com/pyet-org/pyet/blob/master/pyet/radiation.py"
+    Inputs:
+        conceptual_forcing_timestep: torch.Tensor shape (batch_size, n_features) where 
+            n_features = 3 for hourly data: [rainfall_mm_per_timestep, temp_C, shortwave_radiation_W_per_m2]
+            n_features = 4 for daily data: [rainfall_mm_per_timestep, min_temp_C, max_temp_C, shortwave_radiation_W_per_m2]
     """
     expected_feats = 3 if cfe_params.hourly else 4
     if conceptual_forcing_timestep.shape[1] != expected_feats:

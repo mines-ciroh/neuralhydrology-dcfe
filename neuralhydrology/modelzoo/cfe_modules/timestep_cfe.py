@@ -1,17 +1,17 @@
 import torch
-from adjust_and_track_runoff_infiltration import adjust_and_track_runoff_infiltration
-from adjust_from_soil_outflux import adjust_from_soil_outflux
-from calculate_convolutional_integral_for_GIUH import calculate_convolutional_integral_for_GIUH
-from calculate_evaporation_from_rainfall import calculate_evaporation_from_rainfall
-from calculate_evaporation_from_soil import calculate_evaporation_from_soil
-from calculate_gw_reservoir_flux import calculate_gw_reservoir_flux
-from cfe_dataclasses import CONSTANTS, CFEParams, Flux, GroundwaterStates, RoutingInfo, SoilStates
-from get_and_calculate_input_rainfall_and_ET import get_and_calculate_input_rainfall_and_ET
-from percolation_and_lateral_flow import percolation_and_lateral_flow
-from run_classic_soil_moisture_subroutine import run_classic_soil_moisture_subroutine
-from run_nash_cascade import run_nash_cascade
-from run_Schaake_subroutine import run_Schaake_subroutine
-from timestep_basin_constants import timestep_basin_constants
+from neuralhydrology.modelzoo.cfe_modules.adjust_and_track_runoff_infiltration import adjust_and_track_runoff_infiltration
+from neuralhydrology.modelzoo.cfe_modules.adjust_from_soil_outflux import adjust_from_soil_outflux
+from neuralhydrology.modelzoo.cfe_modules.calculate_convolutional_integral_for_GIUH import calculate_convolutional_integral_for_GIUH
+from neuralhydrology.modelzoo.cfe_modules.calculate_evaporation_from_rainfall import calculate_evaporation_from_rainfall
+from neuralhydrology.modelzoo.cfe_modules.calculate_evaporation_from_soil import calculate_evaporation_from_soil
+from neuralhydrology.modelzoo.cfe_modules.calculate_gw_reservoir_flux import calculate_gw_reservoir_flux
+from neuralhydrology.modelzoo.cfe_modules.cfe_dataclasses import CFEParams, Flux, GroundwaterStates, RoutingInfo, SoilStates
+from neuralhydrology.modelzoo.cfe_modules.get_and_calculate_input_rainfall_and_ET import get_and_calculate_input_rainfall_and_ET
+from neuralhydrology.modelzoo.cfe_modules.percolation_and_lateral_flow import percolation_and_lateral_flow
+from neuralhydrology.modelzoo.cfe_modules.run_classic_soil_moisture_subroutine import run_classic_soil_moisture_subroutine
+from neuralhydrology.modelzoo.cfe_modules.run_nash_cascade import run_nash_cascade
+from neuralhydrology.modelzoo.cfe_modules.run_Schaake_subroutine import run_Schaake_subroutine
+from neuralhydrology.modelzoo.cfe_modules.timestep_basin_constants import timestep_basin_constants
 
 ## NB: Let's ensure titles of subroutines are super self-explanatory.
 
@@ -23,7 +23,7 @@ def timestep_cfe(
     gw_reservoir: GroundwaterStates,
     soil_reservoir: SoilStates,
     routing_info: RoutingInfo,
-    constants=CONSTANTS,
+    constants=constants,
 ):  # enumerate what this returns. If cfe_params is not modified by this function, do not return it.
     ## INITIALIZE
     # timestep basin constants

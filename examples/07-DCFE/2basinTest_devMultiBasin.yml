@@ -52,7 +52,7 @@ conceptual_model: dcfe
 # dcfe speicifc settings
 dcfe_soil_scheme: classic # classic or ode, ode is not implemented yet
 dcfe_partition_scheme: Schaake # Schaake or Xinanjiang, Xinanjiang is not implemented yet
-dcfe_hourly: False # Daily, hourly is bad
+dcfe_hourly: True # Daily, hourly is bad
 dcfe_spinup_config: average # What CFE parameters to use for spin-up, can be average, calibrated, or dynamic
 dcfe_predict_config: average # What CFE parameters to use for prediction, can be average, calibrated, or dynamic
 
