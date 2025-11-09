@@ -4,7 +4,7 @@ from neuralhydrology.modelzoo.cfe_modules.cfe_dataclasses import CFEParams, Flux
 
 
 def get_and_calculate_input_rainfall_and_ET(
-    conceptual_forcing_timestep, flux: Flux, cfe_params: CFEParams, constants=constants
+    conceptual_forcing_timestep, flux: Flux, cfe_params: CFEParams, constants: any
 ) -> Flux:
     """
     calculate PET from shortwave radiation and mean temperature using jensen_evaporation_2016 "https://github.com/pyet-org/pyet/blob/master/pyet/radiation.py"
@@ -26,12 +26,12 @@ def get_and_calculate_input_rainfall_and_ET(
     if cfe_params.hourly:
         mean_temp = conceptual_forcing_timestep[:, 1]
         shortRad = (
-            conceptual_forcing_timestep[:, 2] * constants.time.step_size / 1000000
+            conceptual_forcing_timestep[:, 2] * constants['time']['step_size'] / 1000000
         )  # convert shortwave radiation [W/m^2] to [MJ/m^2 day]
     else:
         mean_temp = (conceptual_forcing_timestep[:, 1] + conceptual_forcing_timestep[:, 2]) / 2.0
         shortRad = (
-            conceptual_forcing_timestep[:, 3] * constants.time.step_size / 1000000
+            conceptual_forcing_timestep[:, 3] * constants['time']['step_size'] / 1000000
         )  # convert shortwave radiation [W/m^2] to [MJ/m^2 day]
 
     lambd = 2.501 - 0.002361 * mean_temp  # using mean temp

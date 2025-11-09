@@ -22,20 +22,22 @@ def timestep_cfe(
     timestep_params: None,  # for consistency changed timestep_parameters --> timestep_params
     gw_reservoir: GroundwaterStates,
     soil_reservoir: SoilStates,
+    soil_config,
     routing_info: RoutingInfo,
-    constants=constants,
+    constants,
 ):  # enumerate what this returns. If cfe_params is not modified by this function, do not return it.
     ## INITIALIZE
     # timestep basin constants
-
-    cfe_params, gw_reservoir, soil_reservoir = timestep_basin_constants(
-        conceptual_forcing_timestep=x_conceptual_timestep,
-        gw_reservoir=gw_reservoir,
-        soil_reservoir=soil_reservoir,
-        cfe_params=cfe_params,
-        # constants=constants,
-        timestep_params=timestep_params,
-    )
+    
+    if timestep_params is not None:
+        cfe_params, gw_reservoir, soil_reservoir = timestep_basin_constants(
+            conceptual_forcing_timestep=x_conceptual_timestep,
+            gw_reservoir=gw_reservoir,
+            soil_reservoir=soil_reservoir,
+            cfe_params=cfe_params,
+            # constants=constants,
+            timestep_params=timestep_params,
+        )
 
     flux = Flux(
         device=x_conceptual_timestep.device, batch_size=x_conceptual_timestep.shape[0]
@@ -43,7 +45,7 @@ def timestep_cfe(
 
     ## UPDATES
     flux = get_and_calculate_input_rainfall_and_ET(
-        conceptual_forcing_timestep=x_conceptual_timestep, flux=flux, cfe_params=cfe_params
+        conceptual_forcing_timestep=x_conceptual_timestep, flux=flux, cfe_params=cfe_params, constants=constants
     )  # hourly is now in cfe_params. What shall we do with constants?
 
     flux = calculate_evaporation_from_rainfall(flux=flux)
@@ -53,7 +55,7 @@ def timestep_cfe(
     # infiltration partitioning.
     if cfe_params.dcfe_partition_scheme == "Schaake":
         flux, soil_reservoir = run_Schaake_subroutine(
-            flux=flux, constants=constants, cfe_params=cfe_params, soil_reservoir=soil_reservoir
+            flux=flux, constants=constants, cfe_params=cfe_params, soil_reservoir=soil_reservoir, soil_config=soil_config
         )
     else:
         raise NotImplementedError(f"Partition scheme {cfe_params.dcfe_partition_scheme} not implemented.")

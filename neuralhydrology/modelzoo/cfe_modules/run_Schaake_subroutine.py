@@ -10,11 +10,12 @@ def run_Schaake_subroutine(
     constants,
     cfe_params: CFEParams,
     soil_reservoir: SoilStates,
+    soil_config,
 ) -> Tuple[Flux, SoilStates]:
     """
     Note: There's no ice process.
     """
-    soil_reservoir.update(cfe_params)
+    soil_reservoir.update(cfe_params, soil_config, constants)
 
     # Compute masks
     rainfall_mask = flux.timestep_rainfall_input_m > 0
