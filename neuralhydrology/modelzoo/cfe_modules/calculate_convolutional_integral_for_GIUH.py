@@ -4,7 +4,6 @@ from neuralhydrology.modelzoo.cfe_modules.cfe_dataclasses import CFEParams, Flux
 def calculate_convolutional_integral_for_GIUH(
     flux: Flux, routing_info: RoutingInfo, cfe_params: CFEParams
 ) -> tuple[Flux, RoutingInfo]:
-    # DM: @Ziyu can you explain why we set the last element to zero?
     routing_info.runoff_queue_m_per_timestep[:, routing_info.num_ordinates] = 0.0
 
     # Add incoming surface runoff to queue
