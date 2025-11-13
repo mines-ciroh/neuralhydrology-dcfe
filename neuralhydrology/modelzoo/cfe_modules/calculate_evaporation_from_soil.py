@@ -3,9 +3,20 @@ import torch
 from neuralhydrology.modelzoo.cfe_modules.cfe_dataclasses import Flux, SoilStates
 
 
-def calculate_evaporation_from_soil(flux: Flux, soil_reservoir: SoilStates, constants):
-    # Flux fields updated: actual_et_from_soil_m_per_timestep, actual_et_m_per_timestep, reduced_potential_et_m_per_timestep.
-    # Soil states updated: storage_m.
+def calculate_evaporation_from_soil(flux: Flux, soil_reservoir: SoilStates):
+    """ Calculate evaporation from soil moisture with classic soil moisture scheme.
+    Args:
+        flux (Flux): Flux dataclass containing flux variables.
+        soil_reservoir (SoilStates): SoilStates dataclass containing soil state variables.
+
+    Returns:
+        flux:
+            - actual_et_from_soil_m_per_timestep (torch.Tensor): Actual evapotranspiration from soil [m/timestep].
+            - actual_et_m_per_timestep (torch.Tensor): Total actual evapotranspiration [m/timestep].
+            - reduced_potential_et_m_per_timestep (torch.Tensor): Reduced potential evapotranspiration [m/timestep].
+        soil_reservoir:
+            - storage_m (torch.Tensor): Updated soil moisture storage [m/timestep].       
+    """
 
     # INITIALIZE
     soil_wilting_mask = soil_reservoir.storage_m > soil_reservoir.wilting_point_m
@@ -19,12 +30,17 @@ def calculate_evaporation_from_soil(flux: Flux, soil_reservoir: SoilStates, cons
         soil_storage = soil_reservoir.storage_m[soil_wilting_mask & reduced_pet_mask]
         wilting_point = soil_reservoir.wilting_point_m[soil_wilting_mask & reduced_pet_mask]
 
-        storage_threshold_mask = soil_storage > storage_threshold_prim
+        storage_threshold_mask = soil_storage >= storage_threshold_prim
 
         # UPDATE
+        # Ziyu (11/13/2025): NH-dCFE code did not have soil_storage[storage_threshold_mask] - wilting_point[storage_threshold_mask]; 
+        # only soil_storage[storage_threshold_mask]
         # if soil_storage > storage_threshold_primary_m:
+        #actual_et_soil[storage_threshold_mask] = torch.min(
+        #    reduced_pet[storage_threshold_mask], soil_storage[storage_threshold_mask] - wilting_point[storage_threshold_mask]
+        #)
         actual_et_soil[storage_threshold_mask] = torch.min(
-            reduced_pet[storage_threshold_mask], soil_storage[storage_threshold_mask] - wilting_point[storage_threshold_mask]
+            reduced_pet[storage_threshold_mask], soil_storage[storage_threshold_mask]
         )
 
         # If soil_storage < storage_threshold_primary_m:

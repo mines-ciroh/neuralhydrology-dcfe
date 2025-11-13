@@ -4,6 +4,18 @@ from neuralhydrology.modelzoo.cfe_modules.cfe_dataclasses import Flux
 
 
 def calculate_evaporation_from_rainfall(flux: Flux) -> Flux:
+    """Calculate evaporation from rainfall.
+    Args:
+        flux (Flux): Flux dataclass containing model fluxes.
+
+    Returns:
+        flux:
+            - actual_et_from_rain_m_per_timestep: Actual evaporation from rainfall [m/timestep].
+            - timestep_rainfall_input_m: Updated rainfall input after evaporation [m/timestep].
+            - reduced_potential_et_m_per_timestep: Updated potential ET after evaporation from rainfall
+                [m/timestep].
+            - actual_et_m_per_timestep: Updated total actual ET [m/timestep].
+    """
     # INITIALIZE
     rainfall_mask = flux.timestep_rainfall_input_m > 0.0
     # check if any basins in the batch receive rainfall this timestep.

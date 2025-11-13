@@ -12,6 +12,15 @@ def get_and_calculate_input_rainfall_and_ET(
         conceptual_forcing_timestep: torch.Tensor shape (batch_size, n_features) where 
             n_features = 3 for hourly data: [rainfall_mm_per_timestep, temp_C, shortwave_radiation_W_per_m2]
             n_features = 4 for daily data: [rainfall_mm_per_timestep, min_temp_C, max_temp_C, shortwave_radiation_W_per_m2]
+        flux (Flux): Flux dataclass containing model fluxes.
+        cfe_params (CFEParams): CFEParams dataclass containing basin characteristics including hourly
+        constants (any): constants dictionary containing time step size information.
+    
+    Returns:
+        flux:
+            - timestep_rainfall_input_m (torch.Tensor): Updated rainfall input for the timestep [m/timestep].
+            - potential_et_m_per_timestep (torch.Tensor): Updated potential evapotranspiration for the timestep [m/timestep].
+            - reduced_potential_et_m_per_timestep (torch.Tensor): Updated reduced potential evapotranspiration for the timestep [m/timestep].
     """
     expected_feats = 3 if cfe_params.hourly else 4
     if conceptual_forcing_timestep.shape[1] != expected_feats:
@@ -27,7 +36,7 @@ def get_and_calculate_input_rainfall_and_ET(
         mean_temp = conceptual_forcing_timestep[:, 1]
         shortRad = (
             conceptual_forcing_timestep[:, 2] * constants['time']['step_size'] / 1000000
-        )  # convert shortwave radiation [W/m^2] to [MJ/m^2 day]
+        )  # convert shortwave radiation [W/m^2] to [MJ/m^2 hour]
     else:
         mean_temp = (conceptual_forcing_timestep[:, 1] + conceptual_forcing_timestep[:, 2]) / 2.0
         shortRad = (

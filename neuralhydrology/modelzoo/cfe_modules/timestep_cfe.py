@@ -68,7 +68,7 @@ def timestep_cfe(
     else:
         raise NotImplementedError(f"Soil scheme {cfe_params.dcfe_soil_scheme} not implemented.")
 
-    flux, soil_reservoir = adjust_from_soil_outflux(flux=flux, constants=constants, soil_reservoir=soil_reservoir)
+    flux, soil_reservoir = adjust_from_soil_outflux(flux=flux, soil_reservoir=soil_reservoir)
 
     flux, gw_reservoir = percolation_and_lateral_flow(flux=flux, gw_reservoir=gw_reservoir)
 

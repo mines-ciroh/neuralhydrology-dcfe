@@ -5,6 +5,18 @@ from neuralhydrology.modelzoo.cfe_modules.cfe_dataclasses import Flux, Groundwat
 
 # TODO: Check storage_deficit_m against original code.
 def percolation_and_lateral_flow(flux: Flux, gw_reservoir: GroundwaterStates) -> tuple[Flux, GroundwaterStates]:
+    """ Handle percolation to groundwater and lateral flow.
+    Args:
+        flux (Flux): Flux dataclass containing flux variables.
+        gw_reservoir (GroundwaterStates): GroundwaterStates dataclass containing groundwater state variables
+    Returns:
+        flux:
+            - flux_perc_m (torch.Tensor): Updated percolation flux [m/timestep].
+            - surface_runoff_depth_m (torch.Tensor): Updated surface runoff depth [m/timestep].
+        gw_reservoir:
+            - storage_m (torch.Tensor): Updated groundwater storage [m/timestep].
+    """
+    
     ### calculate_groundwater_storage_deficit
     storage_deficit_m = gw_reservoir.storage_max_m - gw_reservoir.storage_m
     ### adjust_precolation_to_gw
@@ -29,8 +41,8 @@ def percolation_and_lateral_flow(flux: Flux, gw_reservoir: GroundwaterStates) ->
     no_overflow_mask = ~overflow_mask
     if torch.any(no_overflow_mask):
         gw_reservoir.storage_m[no_overflow_mask] += flux.flux_perc_m[no_overflow_mask]
-        storage_deficit_m[no_overflow_mask] -= flux.flux_perc_m[
-            no_overflow_mask
-        ]  # NOTE (11/10/2025). This line is not in original dcfe code.
+        #storage_deficit_m[no_overflow_mask] -= flux.flux_perc_m[
+        #    no_overflow_mask
+        #]  # NOTE (11/10/2025). This line is not in original dcfe code. (11/11/2025) After experimenting, does not impact results.
 
     return flux, gw_reservoir
