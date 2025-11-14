@@ -51,20 +51,20 @@ class CFEParams:
         self.dcfe_soil_scheme = dcfe_soil_scheme
         self.dcfe_partition_scheme = dcfe_partition_scheme
 
-    def update(self, timestep_params: torch.Tensor, time_step: int):
+    def update(self, timestep_params: torch.Tensor):
         """
         This mimics the functionality of timestep_basin_constants in the original CFE_modules.py.
         """
-        self.soil_params.bb = timestep_params["bb"][:, time_step]
-        self.soil_params.satdk = timestep_params["satdk"][:, time_step]
-        self.soil_params.slop = timestep_params["slop"][:, time_step]
-        self.soil_params.smcmax = timestep_params["smcmax"][:, time_step]
-        self.soil_params.satpsi = timestep_params["satpsi"][:, time_step]
-        self.basin_characteristics.Cgw = timestep_params["Cgw"][:, time_step]
-        self.basin_characteristics.max_gw_storage = timestep_params["max_gw_storage"][:, time_step]
-        self.basin_characteristics.expon = timestep_params["expon"][:, time_step]
-        self.basin_characteristics.K_lf = timestep_params["K_lf"][:, time_step]
-        self.basin_characteristics.K_nash = timestep_params["K_nash"][:, time_step]
+        self.soil_params.bb = timestep_params["bb"]
+        self.soil_params.satdk = timestep_params["satdk"]
+        self.soil_params.slop = timestep_params["slop"]
+        self.soil_params.smcmax = timestep_params["smcmax"]
+        self.soil_params.satpsi = timestep_params["satpsi"]
+        self.basin_characteristics.Cgw = timestep_params["Cgw"]
+        self.basin_characteristics.max_gw_storage = timestep_params["max_gw_storage"]
+        self.basin_characteristics.expon = timestep_params["expon"]
+        self.basin_characteristics.K_lf = timestep_params["K_lf"]
+        self.basin_characteristics.K_nash = timestep_params["K_nash"]
 
 
 class Flux:
@@ -155,6 +155,7 @@ class SoilConfig:
         # FINALIZE
         self.field_capacity_storage_threshold_m = cfe_params.soil_params.smcmax * storage_thresh_pow_term * lim_diff
         self.lateral_flow_threshold_storage_m = self.field_capacity_storage_threshold_m.clone()
+        
 
 
 class SoilStates:  # new soil_reservoir class

@@ -4,7 +4,7 @@ from neuralhydrology.modelzoo.cfe_modules.cfe_dataclasses import CFEParams, Flux
 
 
 def get_and_calculate_input_rainfall_and_ET(
-    conceptual_forcing_timestep, flux: Flux, cfe_params: CFEParams, constants: any
+    conceptual_forcing_timestep, flux: Flux, cfe_params: CFEParams, constants,
 ) -> Flux:
     """
     calculate PET from shortwave radiation and mean temperature using jensen_evaporation_2016 "https://github.com/pyet-org/pyet/blob/master/pyet/radiation.py"
