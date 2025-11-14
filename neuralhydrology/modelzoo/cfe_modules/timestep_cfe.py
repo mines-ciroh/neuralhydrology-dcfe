@@ -50,7 +50,7 @@ def timestep_cfe(
 
     flux = calculate_evaporation_from_rainfall(flux=flux)
 
-    flux, soil_reservoir = calculate_evaporation_from_soil(flux=flux, constants=constants, soil_reservoir=soil_reservoir)
+    flux, soil_reservoir = calculate_evaporation_from_soil(flux=flux,  soil_reservoir=soil_reservoir)
 
     # infiltration partitioning.
     if cfe_params.dcfe_partition_scheme == "Schaake":
@@ -80,7 +80,7 @@ def timestep_cfe(
     flux, routing_info = calculate_convolutional_integral_for_GIUH(flux=flux, routing_info=routing_info, cfe_params=cfe_params)
 
     # lateral flow routing
-    flux, routing_info, cfe_params = run_nash_cascade(flux=flux, routing_info=routing_info, cfe_params=cfe_params)
+    flux, cfe_params = run_nash_cascade(flux=flux, routing_info=routing_info, cfe_params=cfe_params)
 
     ### FINALIZE
     flux.Qout_m = flux.giuh_runoff_m + flux.nash_lateral_runoff_m + flux.from_deep_gw_to_chan_m

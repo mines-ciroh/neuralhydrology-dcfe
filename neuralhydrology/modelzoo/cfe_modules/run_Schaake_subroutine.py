@@ -13,10 +13,26 @@ def run_Schaake_subroutine(
     soil_config,
 ) -> Tuple[Flux, SoilStates]:
     """
-    Note: There's no ice process.
+    Schaake infiltration partitioning scheme from Schaake et al. 1996.
+    (without ice process)
+    
+    Args:
+        flux (Flux): Flux dataclass containing flux variables.
+        constants (dict): Dictionary of constants.
+        cfe_params (CFEParams): CFE parameters dataclass.
+        soil_reservoir (SoilStates): Soil states dataclass.
+        soil_config: Configuration for soil types.
+    Returns:
+        flux:
+            - surface_runoff_depth_m (torch.Tensor): Updated surface runoff depth in meters.
+            - infiltration_depth_m (torch.Tensor): Updated infiltration depth in meters.
+        soil_reservoir: (updated by soil_reservoir.update)
+            - storage_deficit_m (torch.Tensor): Updated soil storage deficit in [m/timestep].
+            - Schaake_adjusted_magic_constant_by_soil_type (torch.Tensor): Adjusted magic constant by soil type.
     """
-    soil_reservoir.update(cfe_params, soil_config, constants)
 
+    soil_reservoir.update(cfe_params, soil_config, constants)
+    
     # Compute masks
     rainfall_mask = flux.timestep_rainfall_input_m > 0
     soil_noDeficit_mask = soil_reservoir.storage_deficit_m < 0  # mark ones w/o deficit

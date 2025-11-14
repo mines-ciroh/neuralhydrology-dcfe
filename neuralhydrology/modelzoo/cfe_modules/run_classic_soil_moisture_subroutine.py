@@ -6,7 +6,22 @@ from neuralhydrology.modelzoo.cfe_modules.cfe_dataclasses import Flux, SoilState
 def run_classic_soil_moisture_subroutine(flux: Flux, soil_reservoir: SoilStates) -> tuple[Flux, SoilStates]:
     """
     Here and elsewhere, it might be helpful to list here what fields of flux and soil_reservoir are updated by this function.
+    
+    Args:
+        flux (Flux): Flux dataclass containing flux variables.
+        soil_reservoir (SoilStates): SoilStates dataclass containing soil state variables.
+    Returns:
+        flux:
+            - infiltration_depth_m (torch.Tensor): Updated infiltration depth [m/timestep].
+            - surface_runoff_depth_m (torch.Tensor): Updated surface runoff depth [m/timestep].
+            - primary_flux_m (torch.Tensor): Updated primary soil outflux [m/timestep].
+            - secondary_flux_m (torch.Tensor): Updated secondary soil outflux [m/timestep].
+        soil_reservoir:
+            - storage_m (torch.Tensor): Updated soil moisture storage [m/timestep].
+            - storage_deficit_m (torch.Tensor): Updated soil moisture deficit [m/timestep].
     """
+    
+    
     mask_perc_soil = flux.flux_perc_m > soil_reservoir.storage_deficit_m
     if torch.any(mask_perc_soil):
         diff_perc_soil = flux.flux_perc_m[mask_perc_soil] - soil_reservoir.storage_deficit_m[mask_perc_soil]
@@ -18,7 +33,7 @@ def run_classic_soil_moisture_subroutine(flux: Flux, soil_reservoir: SoilStates)
     # Assumes we don't have a single outlet exponential gw storage...
     # Add infiltration flux and calculate the reservoir flux
     # this is adjusted for ET already (not sure where this is from)
-    soil_reservoir.storage_m = soil_reservoir.storage_m + flux.infiltration_depth_m
+    soil_reservoir.storage_m += flux.infiltration_depth_m
 
     ## do soil_conceptual_reservoir_flux_calc
     # Calculate primary flux
