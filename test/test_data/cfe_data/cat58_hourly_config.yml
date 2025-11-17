@@ -1,0 +1,197 @@
+# --- Experiment configurations --------------------------------------------------------------------
+
+# experiment name, used as folder name
+#experiment_name: testdCFEpetWarm336_run
+experiment_name: DevMultiBasin_Test
+
+# files to specify training, validation and test basins (relative to code root or absolute path)
+train_basin_file: 1_basin.txt
+validation_basin_file: 1_basin.txt
+test_basin_file: 1_basin.txt
+
+# training, validation and test time periods (format = 'dd/mm/yyyy')
+train_start_date: "01/10/2000"
+train_end_date: "30/09/2014"
+validation_start_date: "01/10/1990"
+validation_end_date: "30/09/1999"
+test_start_date: "01/10/1999"
+test_end_date: "30/09/2000"
+
+# which GPU (id) to use [in format of cuda:0, cuda:1 etc, or cpu or None]
+device: cuda:0
+
+# --- Validation configuration ---------------------------------------------------------------------
+
+# specify after how many epochs to perform validation
+validate_every: 2
+
+# specify how many random basins to use for validation
+validate_n_random_basins: 1
+
+# specify which metrics to calculate during validation (see neuralhydrology.evaluation.metrics)
+# this can either be a list or a dictionary. If a dictionary is used, the inner keys must match the name of the
+# target_variable specified below. Using dicts allows for different metrics per target variable.
+metrics:
+  - NSE
+
+# --- Model configuration --------------------------------------------------------------------------
+
+# base model type [lstm, ealstm, cudalstm, embcudalstm, mtslstm]
+# (has to match the if statement in modelzoo/__init__.py)
+model: hybrid_model
+
+conceptual_model: dcfe
+
+# dcfe speicifc settings
+dcfe_soil_scheme: classic # classic or ode, ode is not implemented yet
+dcfe_partition_scheme: Schaake # Schaake or Xinanjiang, Xinanjiang is not implemented yet
+dcfe_hourly: True # Daily, hourly is bad
+dcfe_spinup_config: average # What CFE parameters to use for spin-up, can be average, calibrated, or dynamic
+dcfe_predict_config: average # What CFE parameters to use for prediction, can be average, calibrated, or dynamic
+
+
+# prediction head [regression]. Define the head specific parameters below
+head: regression
+
+# ----> Regression settings <----
+output_activation: linear
+
+# ----> General settings <----
+
+# Number of cell states of the LSTM
+hidden_size: 20
+
+# Initial bias value of the forget gate
+initial_forget_bias: 3
+
+# Dropout applied to the output of the LSTM
+output_dropout: 0.2 # 10 to 20% dropout is a good amount, but default was 0.4
+
+#### ----- dCFE Specific Configurations ---- #####
+# soil_scheme: classic
+# partition_scheme: Schaake # Schaake or Xinanjiang
+
+# --- Training configuration -----------------------------------------------------------------------
+
+# specify optimizer [Adam]
+optimizer: Adam
+
+# specify loss [MSE, NSE, RMSE]
+loss: MSE
+
+# specify learning rates to use starting at specific epochs (0 is the initial learning rate)
+learning_rate:
+  0: 5e-02 #1e-2 before
+  20: 1e-3 #5e-3 before
+  40: 1e-5
+
+# Mini-batch size
+batch_size: 256
+
+# Number of training epochs
+epochs: 3
+
+# If a value, clips the gradients during training to that norm.
+clip_gradient_norm: 1
+
+# Defines which time steps are used to calculate the loss. Can't be larger than seq_length.
+# If use_frequencies is used, this needs to be a dict mapping each frequency to a predict_last_n-value, else an int.
+predict_last_n: 365
+
+# Length of the input sequence
+seq_length: 910 # must be predict_last_n + warmup_period + spin_up
+
+warmup_period: 180 #for the LSTM model
+
+spin_up: 365 #for the CFE part of the model
+
+# Number of parallel workers used in the data pipeline
+num_workers: 8
+
+# Log the training loss every n steps
+log_interval: 5
+
+# If true, writes logging results into tensorboard file
+log_tensorboard: True
+
+# If a value and greater than 0, logs n random basins as figures during validation
+log_n_figures: 1
+
+# Save model weights every n epochs
+save_weights_every: 1
+
+seed: 123 # random seed for reproducibility
+
+# --- Data configurations --------------------------------------------------------------------------
+
+# which data set to use [camels_us, camels_gb, global, hourly_camels_us]
+dataset: camels_us
+
+# Path to data set root
+# data_dir:  /Users/danielmckenzie/Documents/Active_Research/Ziyu/neuralhydrology/neuralhydrology/data/CAMELS_US
+data_dir: /home/daniel/Research/hydrology/neuralhydrology/neuralhydrology/data/CAMELS_US
+#param_dir: /Users/danielmckenzie/Documents/Active_Research/Ziyu/neuralhydrology/CFE_Config_Cver_from_Luciana # insert appropriate directory here.
+param_dir: /home/daniel/Research/hydrology/neuralhydrology/CFE_Config_Cver_from_Luciana
+# calibrated_params_path: /Users/danielmckenzie/Documents/Active_Research/Ziyu/neuralhydrology/data/CFE_Calibrated_Config/runs
+calibrated_params_path: /home/daniel/Research/hydrology/neuralhydrology/neuralhydrology/data/CFE_Calibrated_Config/runs
+#data_dir: /Users/ziyu/Library/CloudStorage/OneDrive-ColoradoSchoolofMines/Documents/College/ResearchStuff/NextGen/Code/data/CAMELS_US
+#param_dir: /Users/ziyu/Library/CloudStorage/OneDrive-ColoradoSchoolofMines/Documents/College/ResearchStuff/NextGen/Code/data/CFE_Config_Cver_from_Luciana # insert appropriate directory here.
+#calibrated_params_path: /Users/ziyu/Library/CloudStorage/OneDrive-ColoradoSchoolofMines/Documents/College/ResearchStuff/NextGen/Code/data/CFE_Calibrated_Config/runs
+
+# Forcing product [daymet, maurer, maurer_extended, nldas, nldas_extended, nldas_hourly]
+# can be either a list of forcings or a single forcing product
+forcings:
+  - maurer
+  - daymet
+  - nldas
+
+dynamic_inputs:
+  - PRCP(mm/day)_nldas
+  - PRCP(mm/day)_maurer
+  - prcp(mm/day)_daymet
+  - srad(W/m2)_daymet
+  - tmax(C)_daymet
+  - tmin(C)_daymet
+  - vp(Pa)_daymet
+
+# static_attributes:
+#  - elev_mean
+#  - slope_mean
+
+duplicate_features:
+  - PRCP(mm/day)_nldas
+  - tmax(C)_daymet
+  - tmin(C)_daymet
+  - srad(W/m2)_daymet
+
+dynamic_conceptual_inputs:
+  - PRCP(mm/day)_nldas_copy1
+  - tmin(C)_daymet_copy1
+  - tmax(C)_daymet_copy1
+  - srad(W/m2)_daymet_copy1
+
+custom_normalization:
+  QObs(mm/d):
+    centering: None
+    scaling: None
+  PRCP(mm/day)_nldas_copy1:
+    centering: None
+    scaling: None
+  srad(W/m2)_daymet_copy1:
+    centering: None
+    scaling: None
+  tmin(C)_daymet_copy1:
+    centering: None
+    scaling: None
+  tmax(C)_daymet_copy1:
+    centering: None
+    scaling: None
+
+
+# which columns to use as target
+target_variables:
+  - QObs(mm/d)
+
+# clip negative predictions to zero for all variables listed below. Should be a list, even for single variables.
+clip_targets_to_zero:
+  - QObs(mm/d)
