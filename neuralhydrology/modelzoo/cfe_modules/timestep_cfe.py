@@ -11,7 +11,6 @@ from neuralhydrology.modelzoo.cfe_modules.percolation_and_lateral_flow import pe
 from neuralhydrology.modelzoo.cfe_modules.run_classic_soil_moisture_subroutine import run_classic_soil_moisture_subroutine
 from neuralhydrology.modelzoo.cfe_modules.run_nash_cascade import run_nash_cascade
 from neuralhydrology.modelzoo.cfe_modules.run_Schaake_subroutine import run_Schaake_subroutine
-#from neuralhydrology.modelzoo.cfe_modules.timestep_basin_constants import timestep_basin_constants
 
 ## NB: Let's ensure titles of subroutines are super self-explanatory.
 
@@ -30,14 +29,6 @@ def timestep_cfe(
     # timestep basin constants
     
     if timestep_params is not None:
-        #cfe_params, gw_reservoir, soil_reservoir = timestep_basin_constants(
-        #    conceptual_forcing_timestep=x_conceptual_timestep,
-        #    gw_reservoir=gw_reservoir,
-        #    soil_reservoir=soil_reservoir,
-        #    cfe_params=cfe_params,
-        #    # constants=constants,
-        #    timestep_params=timestep_params,
-        #)
         cfe_params = CFEParams.update(cfe_params, timestep_params)
         gw_reservoir = GroundwaterStates.update(gw_reservoir, timestep_params)
         soil_config = SoilStates(soil_reservoir, timestep_params)
