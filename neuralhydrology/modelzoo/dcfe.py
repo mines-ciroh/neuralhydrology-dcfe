@@ -44,6 +44,7 @@ class DCFE(BaseConceptualModel):
         states, out = self._initialize_information(conceptual_inputs=x_conceptual, lstm_out=lstm_out)
 
         # initialize model states/reservoirs.
+        constants = get_constants(self.cfg.dcfe_hourly)
         gw_reservoir = GroundwaterStates(device=device, batch_size=batch_size, cfe_params=self.cfe_params)
         soil_config = SoilConfig(cfe_params=self.cfe_params, device=device, batch_size=batch_size, constants=self.constants)
         soil_reservoir = SoilStates(
@@ -55,60 +56,77 @@ class DCFE(BaseConceptualModel):
         )
         routing_info = RoutingInfo(device=device, batch_size=batch_size, cfe_params=self.cfe_params)
 
+        # TODO: want to refactor code so this type of dynamic parameter update is universal for conceptual
+        conceptual_param = self._form_conceptual_input_param(dynamic_parameters)
+        
+        
         ## Spinup CFE module. Do not track gradients.
         with torch.no_grad():
             for j in range(0, self.cfg.spin_up):
-                if self.cfg.dcfe_predict_config == "dynamic":
-                    ## INITIALIZE
-                    # update parameters dependent uon the lstm output.
-                    self.cfe_params.update(dynamic_parameters, j)
-                    gw_reservoir.update(self.cfe_params)
-                    soil_config = SoilConfig(
-                        cfe_params=self.cfe_params, device=device, batch_size=batch_size, constants=self.constants
-                    )
-                    soil_reservoir.update(self.cfe_params, soil_config)
-
-                gw_reservoir, soil_reservoir, routing_info, flux = timestep_cfe(
+                # grab the parameters for this timestep.
+                timestep_conceptual_param = {}
+                for k in dynamic_parameters.keys():
+                    timestep_conceptual_param[k] = conceptual_param[k][:, j]
+                
+                self.cfe_params, gw_reservoir, soil_reservoir, routing_info, flux = timestep_cfe(
                     x_conceptual_timestep=x_conceptual[:, j, :],
                     cfe_params=self.cfe_params,
+                    timestep_params=timestep_conceptual_param,
                     gw_reservoir=gw_reservoir,
                     soil_reservoir=soil_reservoir,
+                    soil_config=soil_config,
                     routing_info=routing_info,
-                )
+                    constants=constants,
+                    )
 
                 ##FINALIZE
                 states, out = self._store_timestep_information(j, flux, gw_reservoir, soil_reservoir, states, out)
 
         # now run dCFE for prediction. Gradients are tracked.
-        for k in range(self.cfg.spin_up, lstm_out.shape[1]):
-            if self.cfg.dcfe_predict_config == "dynamic":
-                self.cfe_params.update(dynamic_parameters, k)
-                gw_reservoir.update(self.cfe_params)
-                soil_config = SoilConfig(
-                    cfe_params=self.cfe_params, device=device, batch_size=batch_size, constants=self.constants
-                )
-                soil_reservoir.update(self.cfe_params, soil_config)
-
-            ## UPDATE
-            gw_reservoir, soil_reservoir, routing_info, flux = timestep_cfe(
-                x_conceptual_timestep=x_conceptual[:, k, :],
+        for i in range(self.cfg.spin_up, lstm_out.shape[1]):
+            # grab the parameters for this timestep.
+            timestep_conceptual_param = {}
+            for k in dynamic_parameters.keys():
+                timestep_conceptual_param[k] = conceptual_param[k][:, i]
+                
+            self.cfe_params, gw_reservoir, soil_reservoir, routing_info, flux = timestep_cfe(
+                x_conceptual_timestep=x_conceptual[:, i, :],
                 cfe_params=self.cfe_params,
+                timestep_params=timestep_conceptual_param,
                 gw_reservoir=gw_reservoir,
                 soil_reservoir=soil_reservoir,
+                soil_config=soil_config,
                 routing_info=routing_info,
-            )
+                constants=constants,
+                )
 
             ## FINALIZE
-            states, out = self._store_timestep_information(k, flux, gw_reservoir, soil_reservoir, routing_info, states, out)
+            states, out = self._store_timestep_information(i, flux, gw_reservoir, soil_reservoir, routing_info, states, out)
 
         return {"y_hat": out, "parameters": dynamic_parameters, "internal_states": states}
 
-    def _store_timestep_information(self, timestep_idx, flux, gw_reservoir, soil_reservoir, routing_info, states, out):
+    def _store_timestep_information(self, timestep_idx, flux, gw_reservoir, soil_reservoir, states, out):
         out[:, timestep_idx, 0] = flux.Qout_m * 1000
         states["gw_reservoir_storage_m"][:, timestep_idx] = gw_reservoir.storage_m
         states["soil_reservoir_storage_m"][:, timestep_idx] = soil_reservoir.storage_m
         states["first_nash_storage"][:, timestep_idx] = self.cfe_params.basin_characteristics.nash_storage[:, 0]
         return states, out
+    
+    def _form_conceptual_input_param(self, dynamic_parameters: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+        if self.cfg.conceptual_param_config == "dynamic":
+            conceptual_param = dynamic_parameters
+        elif self.cfg.conceptual_param_config == "operational_average":
+            for k in dynamic_parameters.keys():
+                mean_vals = dynamic_parameters[k][:, : (self.cfg.spin_up - 1)].mean(dim=1, keepdim=True)
+                conceptual_param[k] = mean_vals.expand_as(dynamic_parameters[k])
+        elif self.cfg.conceptual_param_config == "oracle_average":
+            for k in dynamic_parameters.keys():
+                mean_vals = dynamic_parameters[k].mean(dim=1, keepdim=True)
+                conceptual_param[k] = mean_vals.expand_as(dynamic_parameters[k])
+        else:
+            raise NotImplementedError(f"Conceptual parameter configuration {self.cfg.conceptual_param_config} invalid. Choose from 'dynamic', 'operational_average', or 'oracle_average'.")
+        
+        return conceptual_param
 
     @property
     def parameter_ranges(self):

@@ -261,21 +261,18 @@ class Config(object):
         return cfg
 
 #_____new for dCFE_____
-#    @property
-#    def param_dir(self) -> Path:
-#        return self._cfg.get("param_dir", None)
     
     @property
     def dcfe_hourly(self) -> bool:
         return self._cfg.get("dcfe_hourly", False)
     
-#    @property
-#    def calibrated_params_path(self) -> Path:
-#        return self._cfg.get("calibrated_params_path", None)
+    @property
+    def conceptual_dir(self) -> Path:
+        return self._cfg.get("conceptual_dir", None)
     
-#    @property
-#    def spin_up(self) -> int:
-#        return self._cfg.get("spin_up", 0)
+    @property
+    def spin_up_period(self) -> int:
+        return self._cfg.get("spin_up_period", 0)
     
     @property
     def dcfe_soil_scheme(self) -> str:
@@ -285,13 +282,9 @@ class Config(object):
     def dcfe_partition_scheme(self) -> str:
         return self._cfg.get("dcfe_partition_scheme", "Schaake")
     
-#    @property
-#    def dcfe_spinup_config(self) -> dict:
-#        return self._cfg.get("dcfe_spinup_config", "calibrated")
-    
-#    @property
-#    def dcfe_predict_config(self) -> dict:
-#        return self._cfg.get("dcfe_predict_config", "average")
+    @property
+    def conceptual_param_config(self) -> dict:
+        return self._cfg.get("conceptual_param_config", "dynamic")
     
     #____end of new for dCFE____
     

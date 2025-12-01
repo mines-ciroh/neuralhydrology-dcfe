@@ -5,6 +5,7 @@ from neuralhydrology.utils.config import Config
 from neuralhydrology.modelzoo.basemodel import BaseModel
 from neuralhydrology.modelzoo.baseconceptualmodel import BaseConceptualModel
 from neuralhydrology.modelzoo.inputlayer import InputLayer
+from neuralhydrology.modelzoo.dcfe import DCFE
 from neuralhydrology.modelzoo.shm import SHM
 
 
@@ -65,7 +66,23 @@ class HybridModel(BaseModel):
         # TODO: Make the conceptual model take a dict of inputs rather than a concatenated tensor.
         x_conceptual = torch.cat([data['x_d'][k][:, self.cfg.warmup_period:, :]
                                   for k in self.cfg.dynamic_conceptual_inputs], axis=-1)
-        pred = self.conceptual_model(x_conceptual=x_conceptual, lstm_out=lstm_out)
+        # get predictions
+        if self.cfg.conceptual_model.lower() == "dcfe":
+            # dCFE only
+            pred = self.conceptual_model(
+                x_conceptual=x_conceptual,
+                lstm_out=lstm_out,
+                additional_features=data["static_conceptual_params"],
+            )
+        else:
+            pred = self.conceptual_model(
+                x_conceptual=x_conceptual,
+                lstm_out=lstm_out,
+            )
+        
+        #was x_conceptual like this before?
+        
+        #pred = self.conceptual_model(x_conceptual=x_conceptual, lstm_out=lstm_out)
 
         return pred
 
@@ -85,6 +102,8 @@ class HybridModel(BaseModel):
         """
         if cfg.conceptual_model.lower() == "shm":
             conceptual_model = SHM(cfg=cfg)
+        elif cfg.conceptual_model.lower() == "dcfe":
+            conceptual_model = DCFE(cfg=cfg)
         else:
             raise NotImplementedError(f"{cfg.conceptual_model} not implemented or not linked in `_get_conceptual_model()`")
 
