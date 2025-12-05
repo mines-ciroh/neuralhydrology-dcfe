@@ -29,10 +29,11 @@ def timestep_cfe(
     # timestep basin constants
     
     if timestep_params is not None:
-        cfe_params = CFEParams.update(cfe_params, timestep_params)
-        gw_reservoir = GroundwaterStates.update(gw_reservoir, timestep_params)
-        soil_config = SoilStates(soil_reservoir, timestep_params)
-        soil_reservoir = SoilStates.update(soil_reservoir, timestep_params)
+        # dynamic parameters change every timestep, so update all dependent states in place
+        cfe_params.update(timestep_params)
+        gw_reservoir.update(cfe_params)
+        soil_config.update(cfe_params)
+        soil_reservoir.update(cfe_params, soil_config, constants)
         
 
     flux = Flux(

@@ -62,7 +62,7 @@ class DCFE(BaseConceptualModel):
         
         ## Spinup CFE module. Do not track gradients.
         with torch.no_grad():
-            for j in range(0, self.cfg.spin_up):
+            for j in range(0, self.cfg.spin_up_period):
                 # grab the parameters for this timestep.
                 timestep_conceptual_param = {}
                 for k in dynamic_parameters.keys():
@@ -101,7 +101,7 @@ class DCFE(BaseConceptualModel):
                 )
 
             ## FINALIZE
-            states, out = self._store_timestep_information(i, flux, gw_reservoir, soil_reservoir, routing_info, states, out)
+            states, out = self._store_timestep_information(i, flux, gw_reservoir, soil_reservoir, states, out)
 
         return {"y_hat": out, "parameters": dynamic_parameters, "internal_states": states}
 

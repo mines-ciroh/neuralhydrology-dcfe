@@ -131,16 +131,21 @@ class SoilConfig:
         self.batch_size = batch_size
         self.constants = constants
 
-        # Compute
-        trigger_z_m = 0.5 * torch.ones(batch_size, dtype=torch.float32, device=device)  # assuming uniform depth of 0.5 m
+        # cache trigger depth so we don't recreate tensors during every update
+        self._trigger_z_m = 0.5 * torch.ones(batch_size, dtype=torch.float32, device=device)
+        self.update(cfe_params)
+
+    def update(self, cfe_params: CFEParams):
+        """Recompute soil configuration thresholds after the parameters changed dynamically."""
+        self.cfe_params = cfe_params
         field_capacity_atm_press_fraction = cfe_params.basin_characteristics.alpha_fc
         # Soil outflux calculation, Eq. 3
         H_water_table_m = (
             field_capacity_atm_press_fraction
-            * constants["physics"]["atm_press_Pa"]
-            / constants["physics"]["unit_weight_water_N_per_m3"]
+            * self.constants["physics"]["atm_press_Pa"]
+            / self.constants["physics"]["unit_weight_water_N_per_m3"]
         )
-        Omega = H_water_table_m - trigger_z_m
+        Omega = H_water_table_m - self._trigger_z_m
 
         # upper & lower limit of the integral in Eq. 4
         lower_lim = torch.pow(Omega, (1.0 - 1.0 / cfe_params.soil_params.bb)) / (1.0 - 1.0 / cfe_params.soil_params.bb)
