@@ -83,7 +83,7 @@ class DCFE(BaseConceptualModel):
                 states, out = self._store_timestep_information(j, flux, gw_reservoir, soil_reservoir, states, out)
 
         # now run dCFE for prediction. Gradients are tracked.
-        for i in range(self.cfg.spin_up, lstm_out.shape[1]):
+        for i in range(self.cfg.spin_up_period, lstm_out.shape[1]):
             # grab the parameters for this timestep.
             timestep_conceptual_param = {}
             for k in dynamic_parameters.keys():
@@ -117,7 +117,7 @@ class DCFE(BaseConceptualModel):
             conceptual_param = dynamic_parameters
         elif self.cfg.conceptual_param_config == "operational_average":
             for k in dynamic_parameters.keys():
-                mean_vals = dynamic_parameters[k][:, : (self.cfg.spin_up - 1)].mean(dim=1, keepdim=True)
+                mean_vals = dynamic_parameters[k][:, : (self.cfg.spin_up_period - 1)].mean(dim=1, keepdim=True)
                 conceptual_param[k] = mean_vals.expand_as(dynamic_parameters[k])
         elif self.cfg.conceptual_param_config == "oracle_average":
             for k in dynamic_parameters.keys():

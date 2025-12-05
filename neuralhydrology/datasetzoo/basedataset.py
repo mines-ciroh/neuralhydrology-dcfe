@@ -188,7 +188,11 @@ class BaseDataset(Dataset):
                                                             groups=self.cfg.dynamic_inputs)
             sample[f'y{freq_suffix}'] = self._y[basin][freq][hindcast_start_idx:global_end_idx]
             sample[f'date{freq_suffix}'] = self._dates[basin][freq][hindcast_start_idx:global_end_idx]
-
+            
+            # grabbing "static_conceptual_params" item in the dictionary
+            # Since RHS is a panda df, need to use .loc
+            sample["static_conceptual_params"] = self.static_conceptual_params.loc[basin]
+            
             # check for static inputs
             static_inputs = []
             if self._attributes:
