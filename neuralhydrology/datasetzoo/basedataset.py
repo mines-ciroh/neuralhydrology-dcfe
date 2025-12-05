@@ -21,6 +21,7 @@ from neuralhydrology.datautils import utils
 from neuralhydrology.utils.config import Config
 from neuralhydrology.utils.errors import NoTrainDataError, NoEvaluationDataError
 from neuralhydrology.utils import samplingutils
+from neuralhydrology.modelzoo.cfe_modules import dcfe_utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -68,6 +69,7 @@ class BaseDataset(Dataset):
         super(BaseDataset, self).__init__()
         self.cfg = cfg
         self.is_train = is_train
+        self._load_conceptual_params()
 
         if period not in ["train", "validation", "test"]:
             raise ValueError("'period' must be one of 'train', 'validation' or 'test' ")
@@ -244,6 +246,13 @@ class BaseDataset(Dataset):
     def _load_attributes(self) -> pd.DataFrame:
         """This function has to return the attributes in a basin-indexed DataFrame."""
         raise NotImplementedError
+    
+    def _load_conceptual_params(self) -> pd.DataFrame:
+        """This function has to return the conceptual parameters in a basin-indexed DataFrame."""
+
+        """Now this function loads the conceptual parameters from the DCFE_utils module, static_conceptual_params is basin-indexed df"""
+        self.static_conceptual_params = dcfe_utils.get_dcfe_params(self.cfg)
+
 
     def _create_id_to_int(self):
         self.id_to_int = {str(b): i for i, b in enumerate(np.random.permutation(self.basins))}
@@ -855,6 +864,8 @@ class BaseDataset(Dataset):
                 # Dynamics are stored as dictionaries with feature names as keys.
                 batch[feature] = {k: torch.stack([sample[feature][k] for sample in samples], dim=0)
                                   for k in samples[0][feature]}
+            elif feature == "static_conceptual_params":
+                batch["static_conceptual_params"] = dcfe_utils.convert_static_conceptual_params_to_batch(samples)
             else:
                 # Everything else is a torch.Tensor.
                 batch[feature] = torch.stack([sample[feature] for sample in samples], dim=0)

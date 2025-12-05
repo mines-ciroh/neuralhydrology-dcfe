@@ -22,6 +22,7 @@ from neuralhydrology.training import get_loss_obj, get_optimizer, get_regulariza
 from neuralhydrology.training.logger import Logger
 from neuralhydrology.utils.config import Config
 from neuralhydrology.utils.logging_utils import setup_logging
+from neuralhydrology.modelzoo.cfe_modules.dcfe_utils import move_data_to_device
 from neuralhydrology.training.earlystopper import EarlyStopper
 
 LOGGER = logging.getLogger(__name__)
@@ -314,11 +315,15 @@ class BaseTrainer(object):
                 if key.startswith('x_d'):
                     data[key] = {k: v.to(self.device) for k, v in data[key].items()}
                 elif not key.startswith('date'):
-                    data[key] = data[key].to(self.device)
+                    if key == "static_conceptual_params":
+                        data[key] = move_data_to_device(data[key], self.device)
+                    else:
+                        data[key] = data[key].to(self.device)
 
             # apply possible pre-processing to the batch before the forward pass
             data = self.model.pre_model_hook(data, is_train=True)
-
+            
+            
             # get predictions
             predictions = self.model(data)
 

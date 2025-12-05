@@ -139,3 +139,49 @@ KEYS = {
         "refkdt",
     ],
 }
+
+def convert_static_conceptual_params_to_batch(
+    samples: List[Dict[str, np.ndarray]],
+) -> Dict[str, torch.Tensor]:
+    """
+    Takes a list of samples of static_conceptual_parameters and converts them into a batch.
+    The batch is a dictionary. Each key references a static_conceptual_parameter. The value is now a torch.Tensor
+    of shape (batch_size, n_parameters), where n_parameters is the number of parameters for that static_conceptual_parameter.
+    Note that giuh_ordinates needs to be handled separately, as it is a 1D array of variable length.
+    """
+
+    feature = "static_conceptual_params"
+    keys = list(samples[0][feature].keys())
+    batched_static_conceptual_params = {}
+
+    for key in keys:
+        if key != "giuh_ordinates":
+            batched_static_conceptual_params[key] = torch.stack([sample[feature][key] for sample in samples])
+        else:
+            pad_target = max([len(sample[feature]["giuh_ordinates"]) for sample in samples])
+            pad_lengths = [pad_target - len(sample[feature]["giuh_ordinates"]) for sample in samples]
+            batched_static_conceptual_params[key] = torch.stack(
+                [
+                    F.pad(
+                        sample[feature]["giuh_ordinates"],
+                        (0, pad_length),
+                        "constant",
+                        0,
+                    )
+                    for sample, pad_length in zip(samples, pad_lengths)
+                ]
+            )
+    return batched_static_conceptual_params
+
+def move_data_to_device(
+    data: Dict[str, Union[torch.Tensor, Dict[str, torch.Tensor]]], device: torch.device
+) -> Dict[str, Union[torch.Tensor, Dict[str, torch.Tensor]]]:
+    for key in data.keys():
+        if key == "static_conceptual_params":
+            # the value associated to 'static_conceptual_params' is a dictionary.
+            # Need to move each value in the dictionary to the device individually.
+            for static_conceptual_param_name in data[key].keys():
+                data[key][static_conceptual_param_name] = data[key][static_conceptual_param_name].to(device)
+        elif not key.startswith("date"):
+            data[key] = data[key].to(device)
+    return data
