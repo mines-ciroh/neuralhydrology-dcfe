@@ -8,7 +8,7 @@ import torch
 import torch.nn.functional as F
 
 from neuralhydrology.datautils import utils
-from neuralhydrology.utils.config import Config
+
 
 def get_dcfe_params(cfg):
     """This function reads the config file, grabs HydroShare params needed for CFE, and returns a basin-index dataframe
@@ -23,8 +23,9 @@ def get_dcfe_params(cfg):
     Returns:
         df: dataframe inexed by basin ids with 2 columns, soil_params and basinCharacteristics, which are each dicts of parameters
     """
-    cfe_param_dir = cfg.conceptual_dir / "CFE_Config_Cver_from_Luciana"
-    calibrated_params_dir = cfg.conceptual_dir / "CFE_Calibrated_Config" / "runs"
+    if cfg.conceptual_dir is not None:
+        cfe_param_dir = cfg.conceptual_dir / "CFE_Config_Cver_from_Luciana"
+        calibrated_params_dir = cfg.conceptual_dir / "CFE_Calibrated_Config" / "runs"
 
     # --- get all the basin ids as strings ---
     basins = utils.load_basin_file(getattr(cfg, "train_basin_file"))
@@ -102,6 +103,7 @@ def get_dcfe_params(cfg):
 
     return df
 
+
 KEYS = {
     "basin_characteristics": [
         "catchment_area_km2",
@@ -140,6 +142,7 @@ KEYS = {
     ],
 }
 
+
 def convert_static_conceptual_params_to_batch(
     samples: List[Dict[str, np.ndarray]],
 ) -> Dict[str, torch.Tensor]:
@@ -172,6 +175,7 @@ def convert_static_conceptual_params_to_batch(
                 ]
             )
     return batched_static_conceptual_params
+
 
 def move_data_to_device(
     data: Dict[str, Union[torch.Tensor, Dict[str, torch.Tensor]]], device: torch.device

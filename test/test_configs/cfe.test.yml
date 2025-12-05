@@ -28,6 +28,7 @@ metrics:
   - Beta-NSE
 
 # --- Model configuration --------------------------------------------------------------------------
+model: dcfe 
 dcfe_soil_scheme: classic # classic or ode, ode is not implemented yet
 dcfe_partition_scheme: Schaake # Schaake or Xinanjiang, Xinanjiang is not implemented yet
 dcfe_hourly: True # Daily, hourly is bad

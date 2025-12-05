@@ -17,7 +17,7 @@ test_start_date: "01/10/1989"
 test_end_date: "30/09/1999"
 
 # which GPU (id) to use [in format of cuda:0, cuda:1 etc, or cpu, mps or None]
-device: cpu
+device: mps
 
 # --- Validation configuration ---------------------------------------------------------------------
 
