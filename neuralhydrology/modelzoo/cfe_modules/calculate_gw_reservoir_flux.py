@@ -36,6 +36,6 @@ def calculate_gw_reservoir_flux(
     # there's no 2nd flux since exponential
     # DM: Can we remove the secondary flux entirely?
 
-    gw_reservoir.storage_m -= flux.from_deep_gw_to_chan_m
+    gw_reservoir.storage_m = gw_reservoir.storage_m - flux.from_deep_gw_to_chan_m
 
     return flux, gw_reservoir

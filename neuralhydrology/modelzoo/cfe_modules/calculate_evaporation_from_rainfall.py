@@ -36,6 +36,6 @@ def calculate_evaporation_from_rainfall(flux: Flux) -> Flux:
         # adjust pet based on evaporation from rainfall.
         flux.reduced_potential_et_m_per_timestep[rainfall_mask] = pet - actual_et_from_rain
         # Track volume from rainfall.
-        flux.actual_et_m_per_timestep += flux.actual_et_from_rain_m_per_timestep
+        flux.actual_et_m_per_timestep = flux.actual_et_m_per_timestep + flux.actual_et_from_rain_m_per_timestep
 
     return flux

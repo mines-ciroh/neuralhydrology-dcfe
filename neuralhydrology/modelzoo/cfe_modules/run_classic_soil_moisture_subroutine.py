@@ -33,7 +33,7 @@ def run_classic_soil_moisture_subroutine(flux: Flux, soil_reservoir: SoilStates)
     # Assumes we don't have a single outlet exponential gw storage...
     # Add infiltration flux and calculate the reservoir flux
     # this is adjusted for ET already (not sure where this is from)
-    soil_reservoir.storage_m += flux.infiltration_depth_m
+    soil_reservoir.storage_m = soil_reservoir.storage_m + flux.infiltration_depth_m
 
     ## do soil_conceptual_reservoir_flux_calc
     # Calculate primary flux

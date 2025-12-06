@@ -131,10 +131,10 @@ seed: 123 # random seed for reproducibility
 dataset: camels_us
 
 # Path to data set root
-data_dir: /Users/ziyu/Library/CloudStorage/OneDrive-ColoradoSchoolofMines/Documents/College/ResearchStuff/NextGen/Code/data/CAMELS_US
-#data_dir: /home/daniel/Research/hydrology/neuralhydrology/neuralhydrology/data/CAMELS_US
-conceptual_dir: /Users/ziyu/Library/CloudStorage/OneDrive-ColoradoSchoolofMines/Documents/College/ResearchStuff/NextGen/Code/data/Conceptual
-#conceptual_dir: /home/daniel/Research/hydrology/neuralhydrology/CFE_Config_Cver_from_Luciana
+#data_dir: /Users/ziyu/Library/CloudStorage/OneDrive-ColoradoSchoolofMines/Documents/College/ResearchStuff/NextGen/Code/data/CAMELS_US
+data_dir: /Users/danielmckenzie/Documents/Active_Research/Ziyu/neuralhydrology-dcfe/data/CAMELS_US
+#conceptual_dir: /Users/ziyu/Library/CloudStorage/OneDrive-ColoradoSchoolofMines/Documents/College/ResearchStuff/NextGen/Code/data/Conceptual
+conceptual_dir: /Users/danielmckenzie/Documents/Active_Research/Ziyu/neuralhydrology-dcfe/data/Conceptual
 
 # Forcing product [daymet, maurer, maurer_extended, nldas, nldas_extended, nldas_hourly]
 # can be either a list of forcings or a single forcing product

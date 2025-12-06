@@ -19,14 +19,14 @@ def run_nash_cascade(flux: Flux, routing_info: RoutingInfo, cfe_params: CFEParam
     Q = cfe_params.basin_characteristics.K_nash.unsqueeze(1) * nash_storage_timestep
 
     # Update Nash storage with discharge.
-    nash_storage_timestep -= Q
+    nash_storage_timestep = nash_storage_timestep - Q
 
     # First storage gets lateral flow outflux from soil storage
-    nash_storage_timestep[:, 0] += flux.flux_lat_m
+    nash_storage_timestep[:, 0] = nash_storage_timestep[:, 0] + flux.flux_lat_m
 
     # Remaining storage gets discharge from upper Nash storage.
     if routing_info.num_reservoirs > 1:
-        nash_storage_timestep[:, 1:] += Q[:, :-1]
+        nash_storage_timestep[:, 1:] = nash_storage_timestep[:, 1:] + Q[:, :-1]
 
     # Update the state
     cfe_params.basin_characteristics.nash_storage = nash_storage_timestep

@@ -2,7 +2,7 @@ from neuralhydrology.modelzoo.cfe_modules.cfe_dataclasses import Flux, SoilState
 
 
 def adjust_from_soil_outflux(flux: Flux, soil_reservoir: SoilStates) -> tuple[Flux, SoilStates]:
-    """ Module to adjust the soil outflux for CFE model at every timestep, 
+    """Module to adjust the soil outflux for CFE model at every timestep,
     update only implemented for classic soil scheme
 
     Args:
@@ -19,6 +19,6 @@ def adjust_from_soil_outflux(flux: Flux, soil_reservoir: SoilStates) -> tuple[Fl
     flux.flux_lat_m = flux.secondary_flux_m  # lateral_flux
 
     # only implemented update for classic soil scheme, old code includes option for ode
-    soil_reservoir.storage_m -= flux.flux_perc_m + flux.flux_lat_m
+    soil_reservoir.storage_m = soil_reservoir.storage_m - (flux.flux_perc_m + flux.flux_lat_m)
 
     return flux, soil_reservoir

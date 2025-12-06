@@ -22,7 +22,7 @@ def calculate_convolutional_integral_for_GIUH(
     
     # UPDATE
     # Add incoming surface runoff to queue
-    routing_info.runoff_queue_m_per_timestep[:, :-1] += (
+    routing_info.runoff_queue_m_per_timestep[:, :-1] = routing_info.runoff_queue_m_per_timestep[:, :-1] + (
         cfe_params.basin_characteristics.giuh_ordinates * flux.surface_runoff_depth_m.expand(routing_info.num_ordinates, -1).T
     )
     # FINALIZE
