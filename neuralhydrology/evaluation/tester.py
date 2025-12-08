@@ -22,6 +22,7 @@ from neuralhydrology.evaluation.metrics import calculate_metrics, get_available_
 from neuralhydrology.evaluation.utils import load_basin_id_encoding, metrics_to_dataframe
 from neuralhydrology.modelzoo import get_model
 from neuralhydrology.modelzoo.basemodel import BaseModel
+from neuralhydrology.modelzoo.cfe_modules.dcfe_utils import move_data_to_device
 from neuralhydrology.training import get_loss_obj, get_regularization_obj
 from neuralhydrology.training.logger import Logger
 from neuralhydrology.utils.config import Config
@@ -441,11 +442,14 @@ class BaseTester(object):
         losses = []
         with torch.no_grad():
             for data in loader:
-                for key in data:
-                    if type(data[key]) is not dict:
-                        data[key] = data[key].to(self.device)
-                    else:
+                for key in data.keys():
+                    if key.startswith("x_d"):
                         data[key] = {k: v.to(self.device) for k, v in data[key].items()}
+                    elif not key.startswith("date"):
+                        if key == "static_conceptual_params":
+                            data[key] = move_data_to_device(data[key], self.device)
+                        else:
+                            data[key] = data[key].to(self.device)
                     # if key.startswith("x_d"):
                     #     data[key] = {k: v.to(self.device) for k, v in data[key].items()}
                     # elif not key.startswith("date"):
