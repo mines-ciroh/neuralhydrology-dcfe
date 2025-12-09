@@ -58,8 +58,7 @@ class DCFE(BaseConceptualModel):
 
         # TODO: want to refactor code so this type of dynamic parameter update is universal for conceptual
         conceptual_param = self._form_conceptual_input_param(dynamic_parameters)
-        
-        
+
         ## Spinup CFE module. Do not track gradients.
         with torch.no_grad():
             for j in range(0, self.cfg.spin_up_period):
@@ -67,7 +66,7 @@ class DCFE(BaseConceptualModel):
                 timestep_conceptual_param = {}
                 for k in dynamic_parameters.keys():
                     timestep_conceptual_param[k] = conceptual_param[k][:, j]
-                
+
                 self.cfe_params, gw_reservoir, soil_reservoir, routing_info, flux = timestep_cfe(
                     x_conceptual_timestep=x_conceptual[:, j, :],
                     cfe_params=self.cfe_params,
@@ -77,7 +76,7 @@ class DCFE(BaseConceptualModel):
                     soil_config=soil_config,
                     routing_info=routing_info,
                     constants=constants,
-                    )
+                )
 
                 ##FINALIZE
                 states, out = self._store_timestep_information(j, flux, gw_reservoir, soil_reservoir, states, out)
@@ -88,7 +87,7 @@ class DCFE(BaseConceptualModel):
             timestep_conceptual_param = {}
             for k in dynamic_parameters.keys():
                 timestep_conceptual_param[k] = conceptual_param[k][:, i]
-                
+
             self.cfe_params, gw_reservoir, soil_reservoir, routing_info, flux = timestep_cfe(
                 x_conceptual_timestep=x_conceptual[:, i, :],
                 cfe_params=self.cfe_params,
@@ -98,7 +97,7 @@ class DCFE(BaseConceptualModel):
                 soil_config=soil_config,
                 routing_info=routing_info,
                 constants=constants,
-                )
+            )
 
             ## FINALIZE
             states, out = self._store_timestep_information(i, flux, gw_reservoir, soil_reservoir, states, out)
@@ -111,21 +110,25 @@ class DCFE(BaseConceptualModel):
         states["soil_reservoir_storage_m"][:, timestep_idx] = soil_reservoir.storage_m
         states["first_nash_storage"][:, timestep_idx] = self.cfe_params.basin_characteristics.nash_storage[:, 0]
         return states, out
-    
+
     def _form_conceptual_input_param(self, dynamic_parameters: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
         if self.cfg.conceptual_param_config == "dynamic":
             conceptual_param = dynamic_parameters
         elif self.cfg.conceptual_param_config == "operational_average":
+            conceptual_param = {}
             for k in dynamic_parameters.keys():
                 mean_vals = dynamic_parameters[k][:, : (self.cfg.spin_up_period - 1)].mean(dim=1, keepdim=True)
                 conceptual_param[k] = mean_vals.expand_as(dynamic_parameters[k])
         elif self.cfg.conceptual_param_config == "oracle_average":
+            conceptual_param = {}
             for k in dynamic_parameters.keys():
                 mean_vals = dynamic_parameters[k].mean(dim=1, keepdim=True)
                 conceptual_param[k] = mean_vals.expand_as(dynamic_parameters[k])
         else:
-            raise NotImplementedError(f"Conceptual parameter configuration {self.cfg.conceptual_param_config} invalid. Choose from 'dynamic', 'operational_average', or 'oracle_average'.")
-        
+            raise NotImplementedError(
+                f"Conceptual parameter configuration {self.cfg.conceptual_param_config} invalid. Choose from 'dynamic', 'operational_average', or 'oracle_average'."
+            )
+
         return conceptual_param
 
     @property
