@@ -15,7 +15,7 @@ train_end_date: "30/09/2014"
 validation_start_date: "01/10/1990"
 validation_end_date: "30/09/1999"
 test_start_date: "01/10/1999"
-test_end_date: "30/09/2000"
+test_end_date: "30/09/2004"
 
 #train_start_date: "01/10/2000"
 #train_end_date: "30/09/2013"
@@ -92,7 +92,7 @@ learning_rate:
 batch_size: 256
 
 # Number of training epochs
-epochs: 3
+epochs: 10
 
 # If a value, clips the gradients during training to that norm.
 clip_gradient_norm: 1
