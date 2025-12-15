@@ -151,3 +151,5 @@ def test_cfe(get_config: Fixture[Callable[[str], dict]]):
     giuh_runoff_sim = Discharge[:, 1].numpy()
     rmse_giuh_runoff = np.sqrt(((giuh_runoff[490:550] - giuh_runoff_sim[490:550]) ** 2).mean())
     assert rmse_giuh_runoff < 3e-4
+    
+# TODO: define test_dcfe_dynamic, test_dcfe_oracle, test_dcfe_operational for training smoke test

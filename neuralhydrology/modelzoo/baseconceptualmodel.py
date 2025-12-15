@@ -49,6 +49,26 @@ class BaseConceptualModel(nn.Module):
             dynamic_parameters[parameter_name] = range_t[:, :1] + torch.sigmoid(lstm_out[:, :, index]) * (range_t[:, 1:] - range_t[:, :1])
 
         return dynamic_parameters
+    
+    def _form_conceptual_input_param(self, dynamic_parameters: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+        if self.cfg.conceptual_param_config == "dynamic":
+            conceptual_param = dynamic_parameters
+        elif self.cfg.conceptual_param_config == "operational_average":
+            conceptual_param = {}
+            for k in dynamic_parameters.keys():
+                mean_vals = dynamic_parameters[k][:, : (self.cfg.spin_up_period - 1)].mean(dim=1, keepdim=True)
+                conceptual_param[k] = mean_vals.expand_as(dynamic_parameters[k])
+        elif self.cfg.conceptual_param_config == "oracle_average":
+            conceptual_param = {}
+            for k in dynamic_parameters.keys():
+                mean_vals = dynamic_parameters[k].mean(dim=1, keepdim=True)
+                conceptual_param[k] = mean_vals.expand_as(dynamic_parameters[k])
+        else:
+            raise NotImplementedError(
+                f"Conceptual parameter configuration {self.cfg.conceptual_param_config} invalid. Choose from 'dynamic', 'operational_average', or 'oracle_average'."
+            )
+
+        return conceptual_param
 
     def _initialize_information(self, conceptual_inputs: torch.Tensor,
                                 lstm_out: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], torch.Tensor]:

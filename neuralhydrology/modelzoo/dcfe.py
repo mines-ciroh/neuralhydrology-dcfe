@@ -111,26 +111,6 @@ class DCFE(BaseConceptualModel):
         states["first_nash_storage"][:, timestep_idx] = self.cfe_params.basin_characteristics.nash_storage[:, 0]
         return states, out
 
-    def _form_conceptual_input_param(self, dynamic_parameters: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
-        if self.cfg.conceptual_param_config == "dynamic":
-            conceptual_param = dynamic_parameters
-        elif self.cfg.conceptual_param_config == "operational_average":
-            conceptual_param = {}
-            for k in dynamic_parameters.keys():
-                mean_vals = dynamic_parameters[k][:, : (self.cfg.spin_up_period - 1)].mean(dim=1, keepdim=True)
-                conceptual_param[k] = mean_vals.expand_as(dynamic_parameters[k])
-        elif self.cfg.conceptual_param_config == "oracle_average":
-            conceptual_param = {}
-            for k in dynamic_parameters.keys():
-                mean_vals = dynamic_parameters[k].mean(dim=1, keepdim=True)
-                conceptual_param[k] = mean_vals.expand_as(dynamic_parameters[k])
-        else:
-            raise NotImplementedError(
-                f"Conceptual parameter configuration {self.cfg.conceptual_param_config} invalid. Choose from 'dynamic', 'operational_average', or 'oracle_average'."
-            )
-
-        return conceptual_param
-
     @property
     def parameter_ranges(self):
         return PARAMETER_RANGES
