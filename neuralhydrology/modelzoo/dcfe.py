@@ -41,7 +41,7 @@ class DCFE(BaseConceptualModel):
         )  # convert lstm output to appropriate range for each param.
 
         # initialize structures to store the information
-        states, out = self._initialize_information(conceptual_inputs=x_conceptual, lstm_out=lstm_out)
+        states, out = self._initialize_information(conceptual_inputs=x_conceptual)
 
         # initialize model states/reservoirs.
         constants = get_constants(self.cfg.dcfe_hourly)

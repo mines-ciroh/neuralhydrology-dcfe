@@ -2,7 +2,7 @@
 
 # experiment name, used as folder name
 #experiment_name: testdCFEpetWarm336_run
-experiment_name: DevMultiBasin_Test_Oracle
+experiment_name: test_SHM
 
 # files to specify training, validation and test basins (relative to code root or absolute path)
 train_basin_file: 2_basin.txt
@@ -47,14 +47,7 @@ metrics:
 # (has to match the if statement in modelzoo/__init__.py)
 model: hybrid_model
 
-conceptual_model: dcfe
-
-# dcfe speicifc settings
-dcfe_soil_scheme: classic # classic or ode, ode is not implemented yet
-dcfe_partition_scheme: Schaake # Schaake or Xinanjiang, Xinanjiang is not implemented yet
-dcfe_hourly: False # Daily, hourly is bad
-conceptual_param_config: oracle_average # dynamic, operational_average, oracle_average
-
+conceptual_model: shm
 
 # prediction head [regression]. Define the head specific parameters below
 head: regression
@@ -133,8 +126,6 @@ dataset: camels_us
 # Path to data set root
 #data_dir: /Users/ziyu/Library/CloudStorage/OneDrive-ColoradoSchoolofMines/Documents/College/ResearchStuff/NextGen/Code/data/CAMELS_US
 data_dir: /Users/danielmckenzie/Documents/Active_Research/Ziyu/neuralhydrology-dcfe/data/CAMELS_US
-#conceptual_dir: /Users/ziyu/Library/CloudStorage/OneDrive-ColoradoSchoolofMines/Documents/College/ResearchStuff/NextGen/Code/data/Conceptual
-conceptual_dir: /Users/danielmckenzie/Documents/Active_Research/Ziyu/neuralhydrology-dcfe/data/Conceptual
 
 # Forcing product [daymet, maurer, maurer_extended, nldas, nldas_extended, nldas_hourly]
 # can be either a list of forcings or a single forcing product
@@ -184,7 +175,6 @@ custom_normalization:
   tmax(C)_daymet_copy1:
     centering: None
     scaling: None
-
 
 # which columns to use as target
 target_variables:
