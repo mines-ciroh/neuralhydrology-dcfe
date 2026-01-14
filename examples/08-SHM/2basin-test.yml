@@ -95,11 +95,9 @@ clip_gradient_norm: 1
 predict_last_n: 365
 
 # Length of the input sequence
-seq_length: 910 # must be predict_last_n + warmup_period + spin_up
+seq_length: 545 # must be predict_last_n + warmup_period. Note there is no spinup
 
 warmup_period: 180 #for the LSTM model
-
-spin_up_period: 365 #for the CFE part of the model
 
 # Number of parallel workers used in the data pipeline
 num_workers: 8

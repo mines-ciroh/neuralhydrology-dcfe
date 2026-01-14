@@ -43,7 +43,7 @@ class BaseConceptualModel(nn.Module):
 
         Returns
         -------
-        Dict[str, torch.Tensor]
+        Dict[str, torch.Tensor] each torch.Tensor is of size [batch_size, time_steps]
             Dynamic parameterization of the conceptual model.
         """
         dynamic_parameters = {}

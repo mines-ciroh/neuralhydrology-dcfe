@@ -58,89 +58,34 @@ class SHM(BaseConceptualModel):
             - internal_states: Dict[str, torch.Tensor]]
                 Time-evolution of the internal states of the conceptual model
         """
+        ## INITIALIZE
+        device = x_conceptual.device
+        batch_size = x_conceptual.shape[0]
+
         # get model parameters
-        parameters = self._get_dynamic_parameters_conceptual(lstm_out=lstm_out)
+        dynamic_parameters = self._get_dynamic_parameters_conceptual(lstm_out=lstm_out)
 
         # initialize structures to store the information
         states, out = self._initialize_information(conceptual_inputs=x_conceptual)
 
-        # initialize constants
-        zero = torch.tensor(0.0, dtype=torch.float32, device=x_conceptual.device)
-        one = torch.tensor(1.0, dtype=torch.float32, device=x_conceptual.device)
-        klu = torch.tensor(
-            0.90, requires_grad=False, dtype=torch.float32, device=x_conceptual.device
-        )  # land use correction factor [-]
-
-        # auxiliary vectors to accelerate the execution of the hydrological model
-        t_mean = (x_conceptual[:, :, 2] + x_conceptual[:, :, 3]) / 2
-        temp_mask = t_mean < 0
-        snow_melt = t_mean * parameters["dd"]
-        snow_melt[temp_mask] = zero
-        # liquid precipitation:
-        liquid_p = x_conceptual[:, :, 0].clone()
-        liquid_p[temp_mask] = zero
-        # solid precipitation (snow):
-        snow = x_conceptual[:, :, 0].clone()
-        snow[~temp_mask] = zero
-        # permanent wilting point use in ET:
-        pwp = torch.tensor(0.8, dtype=torch.float32, device=x_conceptual.device) * parameters["sumax"]
-
-        # initialize reservoirs
-        ss = torch.tensor(self.initial_states["ss"], dtype=torch.float32, device=x_conceptual.device).repeat(
-            x_conceptual.shape[0]
-        )
-        sf = torch.tensor(self.initial_states["sf"], dtype=torch.float32, device=x_conceptual.device).repeat(
-            x_conceptual.shape[0]
-        )
-        su = torch.tensor(self.initial_states["su"], dtype=torch.float32, device=x_conceptual.device).repeat(
-            x_conceptual.shape[0]
-        )
-        si = torch.tensor(self.initial_states["si"], dtype=torch.float32, device=x_conceptual.device).repeat(
-            x_conceptual.shape[0]
-        )
-        sb = torch.tensor(self.initial_states["sb"], dtype=torch.float32, device=x_conceptual.device).repeat(
-            x_conceptual.shape[0]
-        )
+        # initialize model reservoirs
+        ss, sf, su, si, sb = self.initialize_states(batch_size, device)
 
         # run hydrological model for each time step
         for j in range(x_conceptual.shape[1]):
-            # Snow module --------------------------
-            qs_out = torch.minimum(ss, snow_melt[:, j])
-            ss = ss - qs_out + snow[:, j]
-            qsp_out = qs_out + liquid_p[:, j]
+            x_conceptual_timestep = x_conceptual[:, j, :]
+            timestep_params = {}
+            for k in dynamic_parameters.keys():
+                """
+                dynamic parameters is Dict[str, torch.Tensor] where torch.Tensor is of shape [batch_size, timesteps].
+                This reshapes to Dict[str, torch.Tensor] where torch.Tensor is of shape [batch_size].
+                So, just parameters for a specific timestep
+                """
+                timestep_params[k] = dynamic_parameters[k][:, j]
 
-            # Split snowmelt+rainfall into inflow to fastflow reservoir and unsaturated reservoir ------
-            qf_in = torch.maximum(zero, qsp_out - parameters["f_thr"][:, j])
-            qu_in = torch.minimum(qsp_out, parameters["f_thr"][:, j])
-
-            # Fastflow module ----------------------
-            sf = sf + qf_in
-            qf_out = sf / parameters["kf"][:, j]
-            sf = sf - qf_out
-
-            # Unsaturated zone----------------------
-            psi = (su / parameters["sumax"][:, j]) ** parameters["beta"][:, j]  # [-]
-            su_temp = su + qu_in * (1 - psi)
-            su = torch.minimum(su_temp, parameters["sumax"][:, j])
-            qu_out = qu_in * psi + torch.maximum(zero, su_temp - parameters["sumax"][:, j])  # [mm]
-            # Evapotranspiration -------------------
-            ktetha = su / parameters["sumax"][:, j]
-            et_mask = su <= pwp[:, j]
-            ktetha[~et_mask] = one
-            ret = x_conceptual[:, j, 1] * klu * ktetha  # [mm]
-            su = torch.maximum(zero, su - ret)  # [mm]
-
-            # Interflow reservoir ------------------
-            qi_in = qu_out * parameters["perc"][:, j]  # [mm]
-            si = si + qi_in  # [mm]
-            qi_out = si / parameters["ki"][:, j]  # [mm]
-            si = si - qi_out  # [mm]
-
-            # Baseflow reservoir -------------------
-            qb_in = qu_out * (1.0 - parameters["perc"][:, j])  # [mm]
-            sb = sb + qb_in  # [mm]
-            qb_out = sb / parameters["kb"][:, j]  # [mm]
-            sb = sb - qb_out
+            ss, sf, su, si, sb, timestep_out = self.timestep_shm(
+                ss, sf, su, si, sb, timestep_params, x_conceptual_timestep, device
+            )
 
             # Store time evolution of the internal states
             states["ss"][:, j] = ss
@@ -148,11 +93,9 @@ class SHM(BaseConceptualModel):
             states["su"][:, j] = su
             states["si"][:, j] = si
             states["sb"][:, j] = sb
+            out[:, j, 0] = timestep_out
 
-            # total outflow
-            out[:, j, 0] = qf_out + qi_out + qb_out  # [mm]
-
-        return {"y_hat": out, "parameters": parameters, "internal_states": states}
+        return {"y_hat": out, "parameters": timestep_params, "internal_states": states}
 
     @property
     def initial_states(self):
@@ -170,3 +113,81 @@ class SHM(BaseConceptualModel):
             "ki": [1.0, 100.0],
             "kb": [10.0, 1000.0],
         }
+
+    def initialize_states(self, batch_size, device):
+        # initialize reservoirs
+        ss = self.initial_states["ss"] * torch.ones(size=(batch_size,), device=device, dtype=torch.float32)
+        sf = self.initial_states["sf"] * torch.ones(size=(batch_size,), device=device, dtype=torch.float32)
+        su = self.initial_states["su"] * torch.ones(size=(batch_size,), device=device, dtype=torch.float32)
+        si = self.initial_states["si"] * torch.ones(size=(batch_size,), device=device, dtype=torch.float32)
+        sb = self.initial_states["sb"] * torch.ones(size=(batch_size,), device=device, dtype=torch.float32)
+
+        return ss, sf, su, si, sb
+
+    def timestep_shm(self, ss, sf, su, si, sb, timestep_params, x_conceptual_timestep, device):
+        """
+        ss, sf, su, si, sb are all reservoirs in SHM. They should be torch tensors of size batch_size.
+        timestep_params is a dict of params. It should NOT have a time dimension.
+        """
+        # auxiliary vectors
+        t_mean = (x_conceptual_timestep[:, 2] + x_conceptual_timestep[:, 3]) / 2
+        temp_mask = t_mean < 0
+        snow_melt = t_mean * timestep_params["dd"]
+        snow_melt[temp_mask] = torch.zeros_like(snow_melt[temp_mask])
+        klu = torch.tensor(0.90, device=device, dtype=torch.float32)
+
+        # liquid precipitation:
+        liquid_p = x_conceptual_timestep[:, 0].clone()
+        liquid_p[temp_mask] = torch.zeros_like(liquid_p[temp_mask])
+
+        # solid precipitation (snow):
+        snow = x_conceptual_timestep[:, 0].clone()
+        snow[~temp_mask] = torch.zeros_like(snow[~temp_mask])
+
+        # permanent wilting point use in ET:
+        pwp = 0.8 * timestep_params["sumax"]
+        # pwp = torch.tensor(0.8, dtype=torch.float32, device=x_conceptual.device) * parameters["sumax"]
+
+        # Snow module --------------------------
+        qs_out = torch.minimum(ss, snow_melt)
+        ss = ss - qs_out + snow
+        qsp_out = qs_out + liquid_p
+
+        # Split snowmelt+rainfall into inflow to fastflow reservoir and unsaturated reservoir ------
+        qf_in = torch.maximum(torch.tensor(0.0), qsp_out - timestep_params["f_thr"])
+        qu_in = torch.minimum(qsp_out, timestep_params["f_thr"])
+
+        # Fastflow module ----------------------
+        sf = sf + qf_in
+        qf_out = sf / timestep_params["kf"]
+        sf = sf - qf_out
+
+        # Unsaturated zone----------------------
+        psi = (su / timestep_params["sumax"]) ** timestep_params["beta"]
+        su_temp = su + qu_in * (1 - psi)
+        su = torch.minimum(su_temp, timestep_params["sumax"])
+        qu_out = qu_in * psi + torch.maximum(torch.tensor(0.0), su_temp - timestep_params["sumax"])  # [mm]
+
+        # Evapotranspiration -------------------
+        ktetha = su / timestep_params["sumax"]
+        et_mask = su <= pwp
+        ktetha[~et_mask] = torch.ones_like(ktetha[~et_mask])
+        ret = x_conceptual_timestep[:, 1] * klu * ktetha  # [mm]
+        su = torch.maximum(torch.tensor(0.0), su - ret)  # [mm]
+
+        # Interflow reservoir ------------------
+        qi_in = qu_out * timestep_params["perc"]  # [mm]
+        si = si + qi_in  # [mm]
+        qi_out = si / timestep_params["ki"]  # [mm]
+        si = si - qi_out  # [mm]
+
+        # Baseflow reservoir -------------------
+        qb_in = qu_out * (1.0 - timestep_params["perc"])  # [mm]
+        sb = sb + qb_in  # [mm]
+        qb_out = sb / timestep_params["kb"]  # [mm]
+        sb = sb - qb_out
+
+        # total outflow
+        timestep_out = qf_out + qi_out + qb_out  # [mm]
+
+        return ss, sf, su, si, sb, timestep_out
