@@ -64,7 +64,7 @@ class SHM(BaseConceptualModel):
 
         # get model parameters
         dynamic_parameters = self._get_dynamic_parameters_conceptual(lstm_out=lstm_out)
-        dynamic_parameters = self._form_conceptual_input_param(dynamic_parameters)
+        conceptual_parameters = self._form_conceptual_input_param(dynamic_parameters)
 
         # initialize structures to store the information
         states, out = self._initialize_information(conceptual_inputs=x_conceptual)
@@ -76,13 +76,13 @@ class SHM(BaseConceptualModel):
         for j in range(x_conceptual.shape[1]):
             x_conceptual_timestep = x_conceptual[:, j, :]
             timestep_params = {}
-            for k in dynamic_parameters.keys():
+            for k in conceptual_parameters.keys():
                 """
                 dynamic parameters is Dict[str, torch.Tensor] where torch.Tensor is of shape [batch_size, timesteps].
                 This reshapes to Dict[str, torch.Tensor] where torch.Tensor is of shape [batch_size].
                 So, just parameters for a specific timestep
                 """
-                timestep_params[k] = dynamic_parameters[k][:, j]
+                timestep_params[k] = conceptual_parameters[k][:, j]
 
             ss, sf, su, si, sb, timestep_out = self.timestep_shm(
                 ss, sf, su, si, sb, timestep_params, x_conceptual_timestep, device
