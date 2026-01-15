@@ -64,6 +64,7 @@ class SHM(BaseConceptualModel):
 
         # get model parameters
         dynamic_parameters = self._get_dynamic_parameters_conceptual(lstm_out=lstm_out)
+        dynamic_parameters = self._form_conceptual_input_param(dynamic_parameters)
 
         # initialize structures to store the information
         states, out = self._initialize_information(conceptual_inputs=x_conceptual)

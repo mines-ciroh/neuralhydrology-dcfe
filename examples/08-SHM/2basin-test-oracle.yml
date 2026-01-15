@@ -49,6 +49,8 @@ model: hybrid_model
 
 conceptual_model: shm
 
+conceptual_param_config: oracle_average
+
 # prediction head [regression]. Define the head specific parameters below
 head: regression
 

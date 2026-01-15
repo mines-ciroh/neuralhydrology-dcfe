@@ -57,6 +57,9 @@ class BaseConceptualModel(nn.Module):
         return dynamic_parameters
 
     def _form_conceptual_input_param(self, dynamic_parameters: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+        """
+        Note each torch.Tensor is of size [batch_size, time_steps]
+        """
         if self.cfg.conceptual_param_config == "dynamic":
             conceptual_param = dynamic_parameters
         elif self.cfg.conceptual_param_config == "operational_average":
