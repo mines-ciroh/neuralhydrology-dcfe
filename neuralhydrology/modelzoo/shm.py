@@ -72,8 +72,25 @@ class SHM(BaseConceptualModel):
         # initialize model reservoirs
         ss, sf, su, si, sb = self.initialize_states(batch_size, device)
 
-        # run hydrological model for each time step
-        for j in range(x_conceptual.shape[1]):
+        # spin up SHM model. Do not track gradients
+        with torch.no_grad():
+            for j in range(0, self.cfg.spin_up_period):
+                x_conceptual_timestep = x_conceptual[:, j, :]
+                timestep_params = {}
+                for k in conceptual_parameters.keys():
+                    """
+                    dynamic parameters is Dict[str, torch.Tensor] where torch.Tensor is of shape [batch_size, timesteps].
+                    This reshapes to Dict[str, torch.Tensor] where torch.Tensor is of shape [batch_size].
+                    So, just parameters for a specific timestep
+                    """
+                    timestep_params[k] = conceptual_parameters[k][:, j]
+
+                ss, sf, su, si, sb, timestep_out = self.timestep_shm(
+                    ss, sf, su, si, sb, timestep_params, x_conceptual_timestep, device
+                )
+
+        # Now run model for prediction while traking gradients
+        for j in range(self.cfg.spin_up_period, lstm_out.shape[1]):
             x_conceptual_timestep = x_conceptual[:, j, :]
             timestep_params = {}
             for k in conceptual_parameters.keys():
