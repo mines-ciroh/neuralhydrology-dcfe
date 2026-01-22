@@ -1,7 +1,7 @@
 # --- Experiment configurations --------------------------------------------------------------------
 
 # experiment name, used as folder name
-experiment_name: EXP1_SHM_CAMELS_noSnow_HPC_OracleAvg
+experiment_name: EXP1_SHM_CAMELS_noSnow_HPC_Dynamic
 
 # files to specify training, validation and test basins (relative to code root or absolute path)
 train_basin_file: /home/ziyu/neuralhydrology-dcfe/examples/08-SHM/basin_noSnow.txt
@@ -41,7 +41,7 @@ model: hybrid_model
 
 conceptual_model: shm
 
-conceptual_param_config: oracle_average #oracle_average, dynamic
+conceptual_param_config: dynamic #oracle_average, dynamic
 
 
 # prediction head [regression]. Define the head specific parameters below
@@ -112,6 +112,7 @@ save_weights_every: 1
 
 seed: 321 # random seed for reproducibility
 
+allow_subsequent_nan_losses: 20
 # --- Data configurations --------------------------------------------------------------------------
 
 # which data set to use [camels_us, camels_gb, global, hourly_camels_us]
@@ -155,9 +156,10 @@ duplicate_features:
 
 dynamic_conceptual_inputs:
   - PRCP(mm/day)_nldas_copy1
+  - SRAD(W/m2)_nldas_copy1
   - Tmin(C)_nldas_copy1
   - Tmax(C)_nldas_copy1
-  - SRAD(W/m2)_nldas_copy1
+
 
 custom_normalization:
   QObs(mm/d):
