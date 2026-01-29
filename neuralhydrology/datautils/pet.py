@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 from numba import njit
 
 
@@ -75,8 +76,7 @@ def get_priestley_taylor_pet(t_min: np.ndarray, t_max: np.ndarray, s_rad: np.nda
     pet = pet * 0.408
 
     return pet
-
-
+    
 @njit
 def _get_slope_svp_curve(t_mean: np.ndarray) -> np.ndarray:
     """Slope of saturation vapour pressure curve

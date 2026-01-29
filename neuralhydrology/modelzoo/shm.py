@@ -1,5 +1,5 @@
 from typing import Dict, Union
-
+from neuralhydrology.modelzoo.cfe_modules import get_pet
 import torch
 
 from neuralhydrology.modelzoo.baseconceptualmodel import BaseConceptualModel
@@ -43,6 +43,11 @@ class SHM(BaseConceptualModel):
             certain prediction period. The time_steps refer to the number of time steps (e.g. days) that our conceptual
             model is going to be run for. The n_inputs refer to the dynamic forcings used to run the conceptual model
             (e.g. Precipitation, Temperature...)
+            In order of n_inputs:
+                0: Precipitation [mm/day]
+                1: PET [mm/day] (for CAMELS_GB); use SRAD [W/m2] for CAMELS_US and convert to PET outside the model
+                2: Tmin [°C]
+                3: Tmax [°C]
 
         lstm_out: torch.Tensor
             Tensor of size [batch_size, time_steps, n_parameters]. The tensor comes from the data-driven model  and will
@@ -190,7 +195,14 @@ class SHM(BaseConceptualModel):
         ktetha = su / timestep_params["sumax"]
         et_mask = su <= pwp
         ktetha[~et_mask] = torch.ones_like(ktetha[~et_mask])
-        ret = x_conceptual_timestep[:, 1] * klu * ktetha  # [mm]
+        if self.cfg.dataset == "camels_us":
+            pet = get_pet.daily_pet_jensen2016(
+                T_avg=t_mean,
+                S_rad=x_conceptual_timestep[:, 1],
+            ).to(device)
+        else:
+            pet = x_conceptual_timestep[:, 1]
+        ret = pet * klu * ktetha  # [mm]
         su = torch.maximum(torch.tensor(0.0), su - ret)  # [mm]
 
         # Interflow reservoir ------------------
@@ -209,3 +221,4 @@ class SHM(BaseConceptualModel):
         timestep_out = qf_out + qi_out + qb_out  # [mm]
 
         return ss, sf, su, si, sb, timestep_out
+    

@@ -126,8 +126,8 @@ seed: 123 # random seed for reproducibility
 dataset: camels_us
 
 # Path to data set root
-#data_dir: /Users/ziyu/Library/CloudStorage/OneDrive-ColoradoSchoolofMines/Documents/College/ResearchStuff/NextGen/Code/data/CAMELS_US
-data_dir: /Users/danielmckenzie/Documents/Active_Research/Ziyu/neuralhydrology-dcfe/data/CAMELS_US
+data_dir: /Users/ziyu/Library/CloudStorage/OneDrive-ColoradoSchoolofMines/Documents/College/ResearchStuff/NextGen/Code/data/CAMELS_US
+#data_dir: /Users/danielmckenzie/Documents/Active_Research/Ziyu/neuralhydrology-dcfe/data/CAMELS_US
 
 # Forcing product [daymet, maurer, maurer_extended, nldas, nldas_extended, nldas_hourly]
 # can be either a list of forcings or a single forcing product
@@ -151,9 +151,9 @@ dynamic_inputs:
 
 duplicate_features:
   - PRCP(mm/day)_nldas
+  - srad(W/m2)_daymet
   - tmax(C)_daymet
   - tmin(C)_daymet
-  - srad(W/m2)_daymet
 
 dynamic_conceptual_inputs:
   - PRCP(mm/day)_nldas_copy1
