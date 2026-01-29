@@ -102,7 +102,7 @@ class DCFE(BaseConceptualModel):
             ## FINALIZE
             states, out = self._store_timestep_information(i, flux, gw_reservoir, soil_reservoir, states, out)
 
-        return {"y_hat": out, "parameters": dynamic_parameters, "internal_states": states}
+        return {"y_hat": out, "parameters": conceptual_param, "internal_states": states}
 
     def _store_timestep_information(self, timestep_idx, flux, gw_reservoir, soil_reservoir, states, out):
         out[:, timestep_idx, 0] = flux.Qout_m * 1000
