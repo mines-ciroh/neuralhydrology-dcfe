@@ -19,7 +19,7 @@ from neuralhydrology.datasetzoo.basedataset import BaseDataset
 from neuralhydrology.datautils.utils import get_frequency_factor, load_basin_file, load_scaler, sort_frequencies
 from neuralhydrology.evaluation import plots
 from neuralhydrology.evaluation.metrics import calculate_metrics, get_available_metrics
-from neuralhydrology.evaluation.utils import load_basin_id_encoding, metrics_to_dataframe
+from neuralhydrology.evaluation.utils import load_basin_id_encoding, metrics_to_dataframe, tensor_dict_to_numpy
 from neuralhydrology.modelzoo import get_model
 from neuralhydrology.modelzoo.basemodel import BaseModel
 from neuralhydrology.modelzoo.cfe_modules.dcfe_utils import move_data_to_device
@@ -464,11 +464,7 @@ class BaseTester(object):
                         if value is not None and not isinstance(value, dict):
                             all_output[key].append(value.detach().cpu().numpy())
                 elif save_all_output:
-                    all_output = {
-                        key: [value.detach().cpu().numpy()]
-                        for key, value in predictions.items()
-                        if value is not None and type(value) != dict
-                    }
+                    all_output = tensor_dict_to_numpy(predictions)
 
                 for freq in frequencies:
                     if predict_last_n[freq] == 0:

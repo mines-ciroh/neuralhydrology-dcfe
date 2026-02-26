@@ -2,7 +2,7 @@
 
 # experiment name, used as folder name
 #experiment_name: testdCFEpetWarm336_run
-experiment_name: test_SHM
+experiment_name: test_SHM_fullout_oracle
 
 # files to specify training, validation and test basins (relative to code root or absolute path)
 train_basin_file: 2_basin.txt
@@ -87,7 +87,7 @@ learning_rate:
 batch_size: 256
 
 # Number of training epochs
-epochs: 10
+epochs: 4
 
 # If a value, clips the gradients during training to that norm.
 clip_gradient_norm: 1
