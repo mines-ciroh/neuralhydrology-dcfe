@@ -4,9 +4,9 @@
 experiment_name: EXP1_SHM_CAMELS_noSnow_HPC_Dynamic
 
 # files to specify training, validation and test basins (relative to code root or absolute path)
-train_basin_file: /home/ziyu/neuralhydrology-dcfe/examples/08-SHM/basin_noSnow.txt
-validation_basin_file: /home/ziyu/neuralhydrology-dcfe/examples/08-SHM/basin_noSnow.txt
-test_basin_file: /home/ziyu/neuralhydrology-dcfe/examples/08-SHM/basin_noSnow.txt
+train_basin_file: /home/adam/dev/repos/neuralhydrology-dcfe/examples/08-SHM/basin_noSnow.txt
+validation_basin_file: /home/adam/dev/repos/neuralhydrology-dcfe/examples/08-SHM/basin_noSnow.txt
+test_basin_file: /home/adam/dev/repos/neuralhydrology-dcfe/examples/08-SHM/basin_noSnow.txt
 
 # training, validation and test time periods (format = 'dd/mm/yyyy')
 train_start_date: "01/10/2004"
@@ -17,7 +17,7 @@ test_start_date: "01/10/1998"
 test_end_date: "30/09/2002"
 
 # which GPU (id) to use [in format of cuda:0, cuda:1 etc, or cpu or None]
-device: cuda:0
+device: cpu
 
 # --- Validation configuration ---------------------------------------------------------------------
 
@@ -79,7 +79,7 @@ learning_rate:
 batch_size: 7680
 
 # Number of training epochs
-epochs: 30
+epochs: 1
 
 # If a value, clips the gradients during training to that norm.
 clip_gradient_norm: 1
@@ -120,8 +120,8 @@ dataset: camels_us
 
 # Path to data set root
 #data_dir:  /Users/danielmckenzie/Documents/Active_Research/Ziyu/neuralhydrology/neuralhydrology/data/CAMELS_US
-data_dir: /home/ziyu/data/CAMELS_US
-conceptual_dir: /home/ziyu/data/Conceptual
+data_dir: /home/adam/dev/repos/neuralhydrology-dcfe/data/CAMELS_US
+conceptual_dir: /home/adam/dev/repos/neuralhydrology-dcfe/data/Conceptual
 
 # Forcing product [daymet, maurer, maurer_extended, nldas, nldas_extended, nldas_hourly]
 # can be either a list of forcings or a single forcing product

@@ -2,8 +2,8 @@ import itertools
 import pickle
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, Iterable
-
+from typing import Any, Dict, Iterable
+import torch
 import numpy as np
 import pandas as pd
 from ruamel.yaml import YAML
@@ -66,3 +66,27 @@ def metrics_to_dataframe(results: dict, metrics: Iterable[str], targets: Iterabl
     df.index.name = "basin"
 
     return df
+
+def tensor_dict_to_numpy(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Recursively convert torch tensors in a dict to CPU numpy arrays.
+    Parameters
+    ----------
+    data : Dict[str, Any]
+    Dictionary that may contain torch tensors and nested dictionaries.
+    Returns
+    -------
+    Dict[str, Any]
+    Dictionary with torch tensors converted to numpy arrays.
+    """
+    converted = {}
+    for key, value in data.items():
+        # If the value is a dict, recursively convert it.
+        if isinstance(value, dict):
+            converted[key] = tensor_dict_to_numpy(value)
+        # If the value is a torch tensor, convert it to a numpy array.
+        elif torch.is_tensor(value): 
+            converted[key] = value.detach().cpu().numpy()
+        # If the value is neither a dict nor a torch tensor, keep it as is.
+        else: 
+            converted[key] = value
+    return converted
