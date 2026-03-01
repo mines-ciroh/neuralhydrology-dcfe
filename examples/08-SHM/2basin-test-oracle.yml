@@ -25,7 +25,7 @@ test_end_date: "30/09/2004"
 #test_end_date: "30/09/2000"
 
 # which GPU (id) to use [in format of cuda:0, cuda:1 etc, or cpu or None]
-device: cpu
+device: cuda:0
 
 # --- Validation configuration ---------------------------------------------------------------------
 
@@ -67,7 +67,6 @@ initial_forget_bias: 3
 
 # Dropout applied to the output of the LSTM
 output_dropout: 0.2 # 10 to 20% dropout is a good amount, but default was 0.4
-
 
 # --- Training configuration -----------------------------------------------------------------------
 
@@ -126,7 +125,7 @@ seed: 123 # random seed for reproducibility
 dataset: camels_us
 
 # Path to data set root
-data_dir: /Users/ziyu/Library/CloudStorage/OneDrive-ColoradoSchoolofMines/Documents/College/ResearchStuff/NextGen/Code/data/CAMELS_US
+data_dir: /home/adam/dev/repos/neuralhydrology-dcfe/data/CAMELS_US
 #data_dir: /Users/danielmckenzie/Documents/Active_Research/Ziyu/neuralhydrology-dcfe/data/CAMELS_US
 
 # Forcing product [daymet, maurer, maurer_extended, nldas, nldas_extended, nldas_hourly]

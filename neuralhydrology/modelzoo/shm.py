@@ -118,7 +118,7 @@ class SHM(BaseConceptualModel):
             states["sb"][:, j] = sb
             out[:, j, 0] = timestep_out
 
-        return {"y_hat": out, "parameters": timestep_params, "internal_states": states}
+        return {"y_hat": out, "parameters": conceptual_parameters, "internal_states": states}
 
     @property
     def initial_states(self):

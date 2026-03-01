@@ -19,7 +19,7 @@ from neuralhydrology.datasetzoo.basedataset import BaseDataset
 from neuralhydrology.datautils.utils import get_frequency_factor, load_basin_file, load_scaler, sort_frequencies
 from neuralhydrology.evaluation import plots
 from neuralhydrology.evaluation.metrics import calculate_metrics, get_available_metrics
-from neuralhydrology.evaluation.utils import load_basin_id_encoding, metrics_to_dataframe
+from neuralhydrology.evaluation.utils import load_basin_id_encoding, metrics_to_dataframe, tensor_dict_to_numpy
 from neuralhydrology.modelzoo import get_model
 from neuralhydrology.modelzoo.basemodel import BaseModel
 from neuralhydrology.modelzoo.cfe_modules.dcfe_utils import move_data_to_device
@@ -27,6 +27,7 @@ from neuralhydrology.training import get_loss_obj, get_regularization_obj
 from neuralhydrology.training.logger import Logger
 from neuralhydrology.utils.config import Config
 from neuralhydrology.utils.errors import AllNaNError, NoEvaluationDataError
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -356,6 +357,14 @@ class BaseTester(object):
         # convert default dict back to normal Python dict to avoid unexpected behavior when trying to access
         # a non-existing basin
         results = dict(results)
+        
+        if predict_last_n.keys() == {'1D'}: # Only works for daily frequency
+            if self.cfg.model == 'hybrid_model' and self.period == 'test' and predict_last_n['1D'] > 1:
+                tqdm.write(
+                    f"Removing overlapping predictions for hybrid model with predict_last_n > 1 on test period.\n"
+                    f"Collapses the results to generate a single continuous time series."
+                )
+                results = self._remove_overlapping_results(results, predict_last_n)
 
         if (self.period == "validation") and (self.cfg.log_n_figures > 0) and (experiment_logger is not None) and results:
             self._create_and_log_figures(results, experiment_logger, epoch)
@@ -458,17 +467,42 @@ class BaseTester(object):
                     #     data[key] = data[key].to(self.device)
                 data = model.pre_model_hook(data, is_train=False)
                 predictions, loss = self._get_predictions_and_loss(model, data)
-
+                
+                predictions, loss = self._get_predictions_and_loss(model, data)
+                
                 if all_output:
                     for key, value in predictions.items():
                         if value is not None and not isinstance(value, dict):
+                            # Append directly to the list
                             all_output[key].append(value.detach().cpu().numpy())
+                            
+                        elif value is not None and isinstance(value, dict):
+                            # 1. Initialize as a dict, not a list
+                            if key not in all_output:
+                                all_output[key] = {} 
+                            
+                            converted_dict = tensor_dict_to_numpy(value)
+                            for sub_key, sub_value in converted_dict.items():
+                                # 2. Initialize the sub_key as a list if it doesn't exist
+                                if sub_key not in all_output[key]:
+                                    all_output[key][sub_key] = []
+                                
+                                # 3. Use .append() to add the batch array to the list
+                                all_output[key][sub_key].append(sub_value)
+                            
                 elif save_all_output:
-                    all_output = {
-                        key: [value.detach().cpu().numpy()]
-                        for key, value in predictions.items()
-                        if value is not None and type(value) != dict
-                    }
+                    for key, value in predictions.items():
+                        if value is not None and not isinstance(value, dict):
+                            # Wrap the first numpy array in a list
+                            all_output[key] = [value.detach().cpu().numpy()]
+                            
+                        elif value is not None and isinstance(value, dict):
+                            converted_dict = tensor_dict_to_numpy(value)
+                            # Initialize the dictionary for this key
+                            all_output[key] = {}
+                            for sub_key, sub_value in converted_dict.items():
+                                # Wrap the first numpy array in a list so future batches can append
+                                all_output[key][sub_key] = [sub_value]
 
                 for freq in frequencies:
                     if predict_last_n[freq] == 0:
@@ -495,7 +529,12 @@ class BaseTester(object):
 
         # concatenate all output variables (currently a dict-of-dicts) into a single-level dict
         for key, list_of_data in all_output.items():
-            all_output[key] = np.concatenate(list_of_data, 0)
+            if not isinstance(list_of_data, dict):
+                all_output[key] = np.concatenate(list_of_data, 0)
+            else:
+                # If it's a dict, concatenate each sub-key's list of arrays
+                for sub_key, sub_list in list_of_data.items():
+                    list_of_data[sub_key] = np.concatenate(sub_list, 0)
 
         # set to NaN explicitly if all losses are NaN to avoid RuntimeWarning
         mean_losses = {}
@@ -524,7 +563,53 @@ class BaseTester(object):
     def _get_plots(self, qobs: np.ndarray, qsim: np.ndarray, title: str):
         raise NotImplementedError
 
+    def _remove_overlapping_results(self, results, predict_last_n):
+        """
+        Removes overlapping predictions from the xarray objects,
+        turning the (len(test_period) X predict_last_n) prediction and observation
+        arrays into (len(test_period) X 1) vectors.
+        
+        This function is only called when:
+        1. The model is a hybrid model such as SHM or dCFE
+        2. We are evaluating on the test period
+        3. predict_last_n > 1
+        4. The only frequency is '1D'
+        
+        # Note: AM: We should revisit this. xarray is odd, and I may have missed something.
+        """
+        # TODO: Date coordinate does not contain the full test period. Need to add the missing dates.
+        for basin in results:
+            for freq in results[basin]: # Reminder that this only applies for 1D frequencies currently.
+                
+                # Ensure 'xr' exists in the dictionary
+                if 'xr' not in results[basin][freq]:
+                    continue
+                
+                # The only keys on the xr_level are the predictions and observations.
+                xr_level = results[basin][freq]['xr']
+                
+                # Array slicing and stitching mechanism
+                for data in xr_level:
+                    content = xr_level[data] # the original data (len(test_period) X predict_last_n)
 
+                    #final_start = len(content) - predict_last_n[freq] # the idx of the last predict_last_n-length forecast
+                    #sliced_data = content[ : final_start : predict_last_n[freq]] # takes steps of predict_last_n
+                    # TODO: Add date/time_step coordinates to the individual prediction arrays to ensure correct alignment after slicing and stacking.
+                    
+                    sliced_data = content[::predict_last_n[freq]] # takes steps of predict_last_n, starting from the beginning of the array. This is because the first predict_last_n-1 predictions are the ones that are not used in the evaluation, so we want to start from the beginning of the array to keep the correct dates.
+                    dims = sliced_data.dims # e.g. ('date', 'time_step')
+                    
+                    # The line below is where the mismatch happens with the dates. There may be an xarray.stack option to remove the below if statement and auto-align dates
+                    xr_level[data] = sliced_data.stack(sample=dims) # stacks the array dimensions into a single continuous timeseries.
+                    
+                # By default, the dates do not get revised after the stacking operation in the event of predict_last_n mismatch.
+                if 'date' in xr_level:
+                    correct_date_len = xr_level[data].shape[0] # get length of the stacked array(s)
+                    xr_level['date'] = xr_level['date'][:correct_date_len] # truncates dates to the same length as stacked array(s)
+                    break
+    
+        return results
+    
 class RegressionTester(BaseTester):
     """Tester class to run inference on a regression model.
 
