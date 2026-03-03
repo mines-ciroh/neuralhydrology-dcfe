@@ -2,7 +2,7 @@
 
 # experiment name, used as folder name
 #experiment_name: testdCFEpetWarm336_run
-experiment_name: test_SHM
+experiment_name: SHM_2basin_dynamic
 
 # files to specify training, validation and test basins (relative to code root or absolute path)
 train_basin_file: 2_basin.txt
@@ -25,7 +25,7 @@ test_end_date: "30/09/2004"
 #test_end_date: "30/09/2000"
 
 # which GPU (id) to use [in format of cuda:0, cuda:1 etc, or cpu or None]
-device: cuda:0
+device: cpu
 
 # --- Validation configuration ---------------------------------------------------------------------
 
@@ -124,8 +124,8 @@ seed: 123 # random seed for reproducibility
 dataset: camels_us
 
 # Path to data set root
-#data_dir: /Users/ziyu/Library/CloudStorage/OneDrive-ColoradoSchoolofMines/Documents/College/ResearchStuff/NextGen/Code/data/CAMELS_US
-data_dir: /home/adam/dev/repos/neuralhydrology-dcfe/data/CAMELS_US
+data_dir: /Users/ziyu/Library/CloudStorage/OneDrive-ColoradoSchoolofMines/Documents/College/ResearchStuff/NextGen/Code/data/CAMELS_US
+#data_dir: /home/adam/dev/repos/neuralhydrology-dcfe/data/CAMELS_US
 
 # Forcing product [daymet, maurer, maurer_extended, nldas, nldas_extended, nldas_hourly]
 # can be either a list of forcings or a single forcing product

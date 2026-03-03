@@ -2,7 +2,7 @@
 
 # experiment name, used as folder name
 #experiment_name: testdCFEpetWarm336_run
-experiment_name: test_SHM
+experiment_name: SHM_2basin_operational
 
 # files to specify training, validation and test basins (relative to code root or absolute path)
 train_basin_file: 2_basin.txt
@@ -126,8 +126,8 @@ seed: 123 # random seed for reproducibility
 dataset: camels_us
 
 # Path to data set root
-#data_dir: /Users/ziyu/Library/CloudStorage/OneDrive-ColoradoSchoolofMines/Documents/College/ResearchStuff/NextGen/Code/data/CAMELS_US
-data_dir: /home/adam/dev/repos/neuralhydrology-dcfe/data/CAMELS_US
+data_dir: /Users/ziyu/Library/CloudStorage/OneDrive-ColoradoSchoolofMines/Documents/College/ResearchStuff/NextGen/Code/data/CAMELS_US
+#data_dir: /home/adam/dev/repos/neuralhydrology-dcfe/data/CAMELS_US
 
 # Forcing product [daymet, maurer, maurer_extended, nldas, nldas_extended, nldas_hourly]
 # can be either a list of forcings or a single forcing product
