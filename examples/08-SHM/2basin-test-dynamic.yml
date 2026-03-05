@@ -183,3 +183,6 @@ target_variables:
 # clip negative predictions to zero for all variables listed below. Should be a list, even for single variables.
 clip_targets_to_zero:
   - QObs(mm/d)
+
+# save all output (internal states and conceptual parameters)
+save_all_output: True

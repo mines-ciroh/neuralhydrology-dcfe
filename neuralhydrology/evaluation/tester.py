@@ -358,13 +358,13 @@ class BaseTester(object):
         # a non-existing basin
         results = dict(results)
         
-        if predict_last_n.keys() == {'1D'}: # Only works for daily frequency
-            if self.cfg.model == 'hybrid_model' and self.period == 'test' and predict_last_n['1D'] > 1:
-                tqdm.write(
-                    f"Removing overlapping predictions for hybrid model with predict_last_n > 1 on test period.\n"
-                    f"Collapses the results to generate a single continuous time series."
-                )
-                results = self._remove_overlapping_results(results, predict_last_n)
+        # AM: This is the entry point for _remove_overlapping_results.
+        if predict_last_n.keys() == {'1D'} and self.cfg.model == 'hybrid_model' and self.period == 'test' and predict_last_n['1D'] > 1:
+            tqdm.write(
+                f"Removing overlapping predictions for hybrid model with predict_last_n > 1 on test period.\n"
+                f"Collapses the results to generate a single continuous time series."
+            )
+            results = self._remove_overlapping_results(results, predict_last_n)
 
         if (self.period == "validation") and (self.cfg.log_n_figures > 0) and (experiment_logger is not None) and results:
             self._create_and_log_figures(results, experiment_logger, epoch)
@@ -562,54 +562,51 @@ class BaseTester(object):
 
     def _get_plots(self, qobs: np.ndarray, qsim: np.ndarray, title: str):
         raise NotImplementedError
-
+        
     def _remove_overlapping_results(self, results, predict_last_n):
         """
         Removes overlapping predictions from the xarray objects,
         turning the (len(test_period) X predict_last_n) prediction and observation
         arrays into (len(test_period) X 1) vectors.
-        
-        This function is only called when:
-        1. The model is a hybrid model such as SHM or dCFE
-        2. We are evaluating on the test period
-        3. predict_last_n > 1
-        4. The only frequency is '1D'
-        
-        # Note: AM: We should revisit this. xarray is odd, and I may have missed something.
         """
-        # TODO: Date coordinate does not contain the full test period. Need to add the missing dates.
+        pln = predict_last_n['1D']
+
         for basin in results:
-            for freq in results[basin]: # Reminder that this only applies for 1D frequencies currently.
-                
-                # Ensure 'xr' exists in the dictionary
+            for freq in results[basin]:
                 if 'xr' not in results[basin][freq]:
                     continue
-                
-                # The only keys on the xr_level are the predictions and observations.
+
                 xr_level = results[basin][freq]['xr']
                 
-                # Array slicing and stitching mechanism
-                for data in xr_level:
-                    content = xr_level[data] # the original data (len(test_period) X predict_last_n)
+                # Get date and time step coords for alignment
+                date_coords      = pd.DatetimeIndex(xr_level.coords['date'].values)
+                time_step_coords = xr_level.coords['time_step'].values.astype(int)
 
-                    #final_start = len(content) - predict_last_n[freq] # the idx of the last predict_last_n-length forecast
-                    #sliced_data = content[ : final_start : predict_last_n[freq]] # takes steps of predict_last_n
-                    # TODO: Add date/time_step coordinates to the individual prediction arrays to ensure correct alignment after slicing and stacking.
-                    
-                    sliced_data = content[::predict_last_n[freq]] # takes steps of predict_last_n, starting from the beginning of the array. This is because the first predict_last_n-1 predictions are the ones that are not used in the evaluation, so we want to start from the beginning of the array to keep the correct dates.
-                    dims = sliced_data.dims # e.g. ('date', 'time_step')
-                    
-                    # The line below is where the mismatch happens with the dates. There may be an xarray.stack option to remove the below if statement and auto-align dates
-                    xr_level[data] = sliced_data.stack(sample=dims) # stacks the array dimensions into a single continuous timeseries.
-                    
-                # By default, the dates do not get revised after the stacking operation in the event of predict_last_n mismatch.
-                if 'date' in xr_level:
-                    correct_date_len = xr_level[data].shape[0] # get length of the stacked array(s)
-                    xr_level['date'] = xr_level['date'][:correct_date_len] # truncates dates to the same length as stacked array(s)
-                    break
-    
+                # Select only the rows that survive the [::pln] sampling (from the prediction stacking)
+                selected_dates = date_coords[::pln]   # shape: (n_selected_rows,)
+
+                # Build a (n_selected_rows, pln) matrix of real calendar dates, then flatten
+                # to match the order produced by .stack(sample=('date','time_step'))
+                full_dates = np.array([
+                    d + pd.to_timedelta(time_step_coords, unit='D')
+                    for d in selected_dates
+                ]).ravel()   # shape: n_selected_rows * pln (same length as predictions)
+
+                # Stack the predictions
+                for var in xr_level:
+                    content    = xr_level[var]
+                    sliced     = content[::pln]
+                    dims       = sliced.dims
+                    xr_level[var] = sliced.stack(sample=dims)
+
+                # Add the coordinates back into each xr_level variable. Rename sample to datetime for clarity
+                xr_level = xr_level.assign_coords(sample=full_dates)
+                xr_level = xr_level.rename({'sample': 'datetime'})
+
+                results[basin][freq]['xr'] = xr_level
+
         return results
-    
+
 class RegressionTester(BaseTester):
     """Tester class to run inference on a regression model.
 
