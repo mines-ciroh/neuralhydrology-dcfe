@@ -5,6 +5,8 @@
 !test/test_data/*.p
 *.swp
 .coverage
+pyproject.toml
+uv.lock
 
 # folder
 build/*

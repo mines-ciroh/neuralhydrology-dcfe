@@ -105,7 +105,7 @@ class BaseTrainer(object):
     def _get_data_loader(self, ds: BaseDataset) -> torch.utils.data.DataLoader:
         return DataLoader(ds,
                           batch_size=self.cfg.batch_size,
-                          shuffle=True,
+                          shuffle=False,
                           num_workers=self.cfg.num_workers,
                           collate_fn=ds.collate_fn)
 
