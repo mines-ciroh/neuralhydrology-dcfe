@@ -358,20 +358,24 @@ class BaseTester(object):
         # a non-existing basin
         results = dict(results)
         
-        # AM: This is the entry point for _remove_overlapping_results.
+        # AM: This is the entry point for _remove_overlapping_results and _remove_overlapping_states.
         if predict_last_n.keys() == {'1D'} and self.cfg.model == 'hybrid_model' and self.period == 'test' and predict_last_n['1D'] > 1:
             tqdm.write(
-                f"Removing overlapping predictions for hybrid model with predict_last_n > 1 on test period.\n"
-                f"Collapses the results to generate a single continuous time series."
+                f"\nRemoving overlapping predictions for hybrid model with predict_last_n > 1 on test period.\n"
+                f"Collapses the results to generate a single continuous time series, consolidating data."
             )
             results = self._remove_overlapping_results(results, predict_last_n)
+            
+            if all_output is not None and save_all_output:
+                tqdm.write(f"\nRemoving overlapping internal_states and parameters for hybrid model with predict_last_n > 1 on test period.\n"
+                           f"Collapses the spin-up and prediction states/parameters into single continuous time series, consolidating data.\n")
+                all_output = self._remove_overlapping_states(all_output, predict_last_n)
 
         if (self.period == "validation") and (self.cfg.log_n_figures > 0) and (experiment_logger is not None) and results:
             self._create_and_log_figures(results, experiment_logger, epoch)
 
-        # save model output to file, if requested
-        results_to_save = None
         states_to_save = None
+        results_to_save = None
         if save_results:
             results_to_save = results
         if save_all_output:
@@ -563,6 +567,83 @@ class BaseTester(object):
     def _get_plots(self, qobs: np.ndarray, qsim: np.ndarray, title: str):
         raise NotImplementedError
         
+    def _remove_overlapping_states(self, all_output, predict_last_n):
+        """
+        Splits overlapping parameter/state arrays into separate spin-up and prediction arrays,
+        and attaches a datetime coordinate to all_output.
+
+        Parameters
+        ----------
+        all_output : dict
+            Basin-level dictionary of model outputs, keyed by basin id.
+        predict_last_n : dict
+            Maps frequency string to number of predicted timesteps, e.g. {'1D': 365}.
+
+        Returns
+        -------
+        dict
+            The modified all_output dict with spinup/prediction arrays and a datetime coordinate.
+            
+        Notes
+        -----
+        ``pln`` is currently treated as a fixed constant (e.g. 365) from the run configuration.
+        In years with 366 days, the ``[::pln]`` window sampling will be slightly misaligned,
+        causing minor errors in which timesteps are assigned to spin-up vs. prediction.
+        A future improvement would be to compute ``pln`` dynamically per-year based on the
+        actual number of days, rather than using a fixed stride.
+        """
+        pln = predict_last_n['1D']
+
+        if all_output is None:
+            return all_output
+
+        # Build datetime coordinate spanning spin-up + test period
+        all_output["datetime"] = pd.date_range(
+            start=self.cfg.test_start_date - pd.Timedelta(days=365),
+            end=self.cfg.test_end_date,
+            freq='D'
+        ).to_numpy()
+
+        for basin in all_output.keys():
+            if basin == "datetime":
+                continue
+
+            if "parameters" in all_output[basin]:
+                all_output[basin]["spinup_parameters"] = {}
+                all_output[basin]["prediction_parameters"] = {}
+                for parameter, arr in all_output[basin]["parameters"].items():
+                    windows = arr[::pln]  # shape: (n_windows, pln)
+                    all_output[basin]["spinup_parameters"][parameter] = np.hstack(
+                        [row[0:pln] for row in windows] + [np.full(pln, np.nan)]
+                    )
+                    all_output[basin]["prediction_parameters"][parameter] = np.hstack(
+                        [np.full(pln, np.nan)] + [row[-pln:] for row in windows]
+                    )
+                del all_output[basin]["parameters"]
+
+            if "internal_states" in all_output[basin]:
+                all_output[basin]["spinup_internal_states"] = {}
+                all_output[basin]["prediction_internal_states"] = {}
+                for state, arr in all_output[basin]["internal_states"].items():
+                    windows = arr[::pln]  # shape: (n_windows, pln)
+                    all_output[basin]["spinup_internal_states"][state] = np.hstack(
+                        [row[0:pln] for row in windows] + [np.full(pln, np.nan)]
+                    )
+                    all_output[basin]["prediction_internal_states"][state] = np.hstack(
+                        [np.full(pln, np.nan)] + [row[-pln:] for row in windows]
+                    )
+                del all_output[basin]["internal_states"]
+
+        # Truncate datetime to match array length (leap years cause minor over-counting)
+        first_basin = next(b for b in all_output if b != "datetime")
+        if "prediction_parameters" in all_output[first_basin]:
+            arr_len = len(next(iter(all_output[first_basin]["prediction_parameters"].values())))
+        else:
+            arr_len = len(next(iter(all_output[first_basin]["prediction_internal_states"].values())))
+        all_output["datetime"] = all_output["datetime"][:arr_len]
+
+        return all_output
+
     def _remove_overlapping_results(self, results, predict_last_n):
         """
         Removes overlapping predictions from the xarray objects,
