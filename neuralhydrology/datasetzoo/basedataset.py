@@ -667,6 +667,11 @@ class BaseDataset(Dataset):
                 x_d[self.frequencies[0]].update({col: df_resampled[[col]].values for col in self.cfg.autoregressive_inputs})
 
             valid_samples = np.argwhere(flag == 1)
+            # Apply stride for non-overlapping prediction windows during evaluation
+            if self.period in ["validation", "test"]:
+                lowest_freq_idx = self.frequencies.index(lowest_freq)
+                stride = self._predict_last_n[lowest_freq_idx]
+                valid_samples = valid_samples[::stride]
             for f in valid_samples:
                 # store pointer to basin and the sample's index in each frequency
                 lookup.append((basin, [frequency_maps[freq][int(f)] for freq in self.frequencies]))
