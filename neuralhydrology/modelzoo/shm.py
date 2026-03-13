@@ -107,6 +107,15 @@ class SHM(BaseConceptualModel):
                     ss, sf, su, si, sb, timestep_params, x_conceptual_timestep, device
                 )
 
+                # Store time evolution of the internal states
+                states["ss"][:, j] = ss
+                states["sf"][:, j] = sf
+                states["su"][:, j] = su
+                states["si"][:, j] = si
+                states["sb"][:, j] = sb
+                out[:, j, 0] = timestep_out
+            
+
         # Now run model for prediction while traking gradients
         for j in range(self.cfg.spin_up_period, lstm_out.shape[1]):
             x_conceptual_timestep = x_conceptual[:, j, :]
