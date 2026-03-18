@@ -1,13 +1,13 @@
 # --- Experiment configurations --------------------------------------------------------------------
 
 # experiment name, used as folder name
-#experiment_name: testdCFEpetWarm336_run
-experiment_name: SHM_2basin_operational
+experiment_name: example_SHM_operational_average
 
-# files to specify training, validation and test basins (relative to code root or absolute path)
-train_basin_file: 2_basin.txt
-validation_basin_file: 2_basin.txt
-test_basin_file: 2_basin.txt
+# files to specify training, validation and test basins (absolute path)
+# Modify these to your specific absolute path!
+train_basin_file: /home/adam/dev/repos/neuralhydrology-dcfe/examples/08-SHM/2_basin.txt
+validation_basin_file: /home/adam/dev/repos/neuralhydrology-dcfe/examples/08-SHM/2_basin.txt
+test_basin_file: /home/adam/dev/repos/neuralhydrology-dcfe/examples/08-SHM/2_basin.txt
 
 # training, validation and test time periods (format = 'dd/mm/yyyy')
 train_start_date: "01/10/2000"
@@ -25,7 +25,7 @@ test_end_date: "30/09/2004"
 #test_end_date: "30/09/2000"
 
 # which GPU (id) to use [in format of cuda:0, cuda:1 etc, or cpu or None]
-device: cuda:0
+device: cpu
 
 # --- Validation configuration ---------------------------------------------------------------------
 
@@ -49,6 +49,7 @@ model: hybrid_model
 
 conceptual_model: shm
 
+# One of [dynamic, operational_average, oracle_average]
 conceptual_param_config: operational_average
 
 # prediction head [regression]. Define the head specific parameters below
@@ -97,11 +98,11 @@ clip_gradient_norm: 1
 predict_last_n: 365
 
 # Length of the input sequence
-seq_length: 910 # must be predict_last_n + warmup_period. Note there is no spinup
+seq_length: 910 # Must be predict_last_n + warmup_period + spinup_period
 
-warmup_period: 180 #for the LSTM model
+warmup_period: 180 # For the LSTM model
 
-spin_up_period: 365
+spin_up_period: 365 # For the process-based model (PBM)
 
 # Number of parallel workers used in the data pipeline
 num_workers: 8
@@ -126,8 +127,8 @@ seed: 123 # random seed for reproducibility
 dataset: camels_us
 
 # Path to data set root
-data_dir: /Users/ziyu/Library/CloudStorage/OneDrive-ColoradoSchoolofMines/Documents/College/ResearchStuff/NextGen/Code/data/CAMELS_US
-#data_dir: /home/adam/dev/repos/neuralhydrology-dcfe/data/CAMELS_US
+# Modify this to your specific absolute path!
+data_dir: /home/adam/dev/repos/neuralhydrology-dcfe/data/CAMELS_US
 
 # Forcing product [daymet, maurer, maurer_extended, nldas, nldas_extended, nldas_hourly]
 # can be either a list of forcings or a single forcing product
@@ -178,10 +179,13 @@ custom_normalization:
     centering: None
     scaling: None
 
-# which columns to use as target
+# The columns to use as target
 target_variables:
   - QObs(mm/d)
 
-# clip negative predictions to zero for all variables listed below. Should be a list, even for single variables.
+# Clip negative predictions to zero for all variables listed below. Should be a list, even for single variables.
 clip_targets_to_zero:
   - QObs(mm/d)
+
+# Saves all output (including PBM internal states and LSTM input parameters to the PBM)
+save_all_output: True

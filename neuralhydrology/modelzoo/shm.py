@@ -12,6 +12,16 @@ class SHM(BaseConceptualModel):
     The SHM receives the dynamic parameterization given by a deep learning model. This class has two properties which
     define the initial conditions of the internal states of the model (buckets) and the ranges in which the model
     parameters are allowed to vary during optimization.
+    
+    Conceptual parameters:
+        - dd: snowmelt degree-day factor [mm/°C/day]
+        - f_thr: threshold for fastflow reservoir [mm]
+        - sumax: maximum storage of the unsaturated reservoir [mm]
+        - beta: shape parameter [-]
+        - perc: interflow-baseflow partitioning parameter [%]
+        - kf: fastflow reservoir retention constant [day]
+        - ki: interflow reservoir retention constant [day]
+        - kb: baseflow reservoir retention constant [day]
 
     Parameters
     ----------
@@ -20,10 +30,13 @@ class SHM(BaseConceptualModel):
 
     References
     ----------
-    .. [#] Ehret, U., van Pruijssen, R., Bortoli, M., Loritz, R., Azmi, E., and Zehe, E.: Adaptive clustering: reducing
+        [#] Ehret, U., van Pruijssen, R., Bortoli, M., Loritz, R., Azmi, E., and Zehe, E.: Adaptive clustering: reducing
         the computational costs of distributed (hydrological) modelling by exploiting time-variable similarity among
         model elements, Hydrology and Earth System Sciences, 24, 4389–4411, https://doi.org/10.5194/hess-24-4389-2020,
         2020.
+        [#] Acuña Espinoza, E., Loritz, R., Álvarez Chaves, M., Bäuerle, N., and Ehret, U.: To Bucket or not to Bucket?
+        Analyzing the performance and interpretability of hybrid hydrological models with dynamic parameterization,
+        Hydrology and Earth System Sciences, 28, 2705–2719, https://doi.org/10.5194/hess-28-2705-2024, 2024.
     """
 
     def __init__(self, cfg: Config):
@@ -93,6 +106,15 @@ class SHM(BaseConceptualModel):
                 ss, sf, su, si, sb, timestep_out = self.timestep_shm(
                     ss, sf, su, si, sb, timestep_params, x_conceptual_timestep, device
                 )
+
+                # Store time evolution of the internal states
+                states["ss"][:, j] = ss
+                states["sf"][:, j] = sf
+                states["su"][:, j] = su
+                states["si"][:, j] = si
+                states["sb"][:, j] = sb
+                out[:, j, 0] = timestep_out
+            
 
         # Now run model for prediction while traking gradients
         for j in range(self.cfg.spin_up_period, lstm_out.shape[1]):
