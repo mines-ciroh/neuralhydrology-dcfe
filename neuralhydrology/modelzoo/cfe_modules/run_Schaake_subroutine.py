@@ -2,7 +2,7 @@ from typing import Tuple
 
 import torch
 
-from neuralhydrology.modelzoo.cfe_modules.cfe_dataclasses import CFEParams, Flux, SoilStates
+from neuralhydrology.modelzoo.cfe_modules.cfe_dataclasses import CFEParams, Flux, SoilStates, SnowStates
 
 
 def run_Schaake_subroutine(
