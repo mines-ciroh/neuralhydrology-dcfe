@@ -3,7 +3,7 @@ import torch
 from neuralhydrology.modelzoo.cfe_modules.cfe_dataclasses import Flux, SnowStates
 
 
-def run_snow_module(
+def run_shm_snow_module(
     flux: Flux, 
     snow_reservoir: SnowStates,
 ) -> Flux:
@@ -30,4 +30,6 @@ def run_snow_module(
     
     flux.timestep_snowmelt_m = snowmelt_adjustment # update snowmelt flux to be the adjusted snowmelt after considering snow storage
     
+    # This module directly goes into partition scheme, so count snowmelt as part of "rainfall" to integrate to CFE.
+    flux.timestep_rainfall_input_m = flux.timestep_rainfall_input_m + flux.timestep_snowmelt_m # add snowmelt to rainfall input for partitioning in the next step.
     return flux, snow_reservoir
