@@ -3,7 +3,7 @@ import torch
 from neuralhydrology.modelzoo.cfe_modules.cfe_dataclasses import CFEParams, Flux
 
 
-def get_and_calculate_input_rainfall_and_ET(
+def calculate_PET_from_rainfall(
     conceptual_forcing_timestep, flux: Flux, cfe_params: CFEParams, constants,
 ) -> Flux:
     """

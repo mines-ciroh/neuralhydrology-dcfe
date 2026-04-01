@@ -2,7 +2,7 @@
 
 # experiment name, used as folder name
 #experiment_name: testdCFEpetWarm336_run
-experiment_name: DevMultiBasin_Test_Dynamic
+experiment_name: Test_Snow_dCFE_Dynamic
 
 # files to specify training, validation and test basins (relative to code root or absolute path)
 train_basin_file: 2_basin.txt
@@ -47,7 +47,7 @@ metrics:
 # (has to match the if statement in modelzoo/__init__.py)
 model: hybrid_model
 
-conceptual_model: dcfe
+conceptual_model: snowdcfe
 
 # dcfe speicifc settings
 dcfe_soil_scheme: classic # classic or ode, ode is not implemented yet

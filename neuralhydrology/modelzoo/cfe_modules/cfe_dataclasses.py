@@ -72,10 +72,10 @@ class CFEParams:
 
 class Snow_CFEParams:
     def __init__(
-        self,
-        snow_params: SnowParams,
+        self, device, batch_size
     ):
-        self.snow_params = snow_params
+        ones_tensor = torch.ones(batch_size, dtype=torch.float32, device=device)
+        self.snow_params = 0.0 * ones_tensor.clone()
 
     def update(self, timestep_params: torch.Tensor):
         """
@@ -122,8 +122,7 @@ class Flux:
                 setattr(self, flux_name, torch.zeros(self.batch_size, dtype=torch.float32, device=self.device))
 
 class SnowStates:
-    def __init__(self, cfe_params: CFEParams, device: str, batch_size: int, constants: Dict[str, Any]):
-        self.cfe_params = cfe_params
+    def __init__(self, device: str, batch_size: int):
         self.device = device
         self.batch_size = batch_size
         ones_tensor = torch.ones(batch_size, dtype=torch.float32, device=device)
@@ -263,10 +262,18 @@ SNOW_CFE_PARAMETERS_RANGES = {
     "satpsi": [0.05, 0.95],
     "dd": [0, 10],  # degree day factor for snowmelt
 }
+
 INITIAL_STATES = {
     "gw_reservoir_storage_m": 0.5,
     "soil_reservoir_storage_m": 0.6,
     "first_nash_storage": 0.0,
+}
+
+INITIAL_STATES_SNOW = {
+    "gw_reservoir_storage_m": 0.5,
+    "soil_reservoir_storage_m": 0.6,
+    "first_nash_storage": 0.0,
+    "snow_storage_m": 0.0,
 }
 
 

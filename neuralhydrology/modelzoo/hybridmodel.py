@@ -7,6 +7,7 @@ from neuralhydrology.modelzoo.baseconceptualmodel import BaseConceptualModel
 from neuralhydrology.modelzoo.inputlayer import InputLayer
 from neuralhydrology.modelzoo.dcfe import DCFE
 from neuralhydrology.modelzoo.shm import SHM
+from neuralhydrology.modelzoo.snowdcfe import SNOWDCFE
 
 
 class HybridModel(BaseModel):
@@ -67,7 +68,7 @@ class HybridModel(BaseModel):
         x_conceptual = torch.cat([data['x_d'][k][:, self.cfg.warmup_period:, :]
                                   for k in self.cfg.dynamic_conceptual_inputs], axis=-1)
         # get predictions
-        if self.cfg.conceptual_model.lower() == "dcfe":
+        if self.cfg.conceptual_model.lower() in ["dcfe", "snowdcfe"]:
             # dCFE only
             pred = self.conceptual_model(
                 x_conceptual=x_conceptual,
@@ -104,6 +105,8 @@ class HybridModel(BaseModel):
             conceptual_model = SHM(cfg=cfg)
         elif cfg.conceptual_model.lower() == "dcfe":
             conceptual_model = DCFE(cfg=cfg)
+        elif cfg.conceptual_model.lower() == "snowdcfe":
+            conceptual_model = SNOWDCFE(cfg=cfg)
         else:
             raise NotImplementedError(f"{cfg.conceptual_model} not implemented or not linked in `_get_conceptual_model()`")
 

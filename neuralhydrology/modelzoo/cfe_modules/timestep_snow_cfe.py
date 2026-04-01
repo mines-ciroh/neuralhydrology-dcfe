@@ -35,6 +35,7 @@ def timestep_snow_cfe(
     if timestep_params is not None:
         # dynamic parameters change every timestep, so update all dependent states in place
         cfe_params.update(timestep_params)
+        snow_cfe_params.update(timestep_params)
         gw_reservoir.update(cfe_params)
         soil_config.update(cfe_params)
         soil_reservoir.update(cfe_params, soil_config, constants)
@@ -49,7 +50,7 @@ def timestep_snow_cfe(
         conceptual_forcing_timestep=x_conceptual_timestep, flux=flux, cfe_params=cfe_params, snow_cfe_params=snow_cfe_params
     )  # hourly is now in cfe_params. What shall we do with constants?
 
-    flux = calculate_PET_from_rainfall(flux=flux, cfe_params=cfe_params) # calculate PET from rainfall before adjusting for snowmelt and snowfall, as snowmelt and snowfall can reduce the amount of rainfall available for ET. This order is important for accurately calculating the evaporation from rainfall in the next step.
+    flux = calculate_PET_from_rainfall(conceptual_forcing_timestep=x_conceptual_timestep,flux=flux, cfe_params=cfe_params, constants=constants) # calculate PET from rainfall before adjusting for snowmelt and snowfall, as snowmelt and snowfall can reduce the amount of rainfall available for ET. This order is important for accurately calculating the evaporation from rainfall in the next step.
     
     flux = calculate_evaporation_from_rainfall(flux=flux)
 
