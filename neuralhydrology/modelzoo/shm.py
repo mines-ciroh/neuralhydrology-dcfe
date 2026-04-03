@@ -222,3 +222,19 @@ class SHM(BaseConceptualModel):
 
         return ss, sf, su, si, sb, timestep_out
     
+    def timestep_shm_tensor_fxn(self, timestep_params, x_conceptual_timestep, device):
+        """
+        Make shm suitable for autograd with tensor input and tensor output, returns a function
+        """
+        def shm(state_tensor):
+            ss = state_tensor[0:1] 
+            sf = state_tensor[1:2]
+            su = state_tensor[2:3]
+            si = state_tensor[3:4]
+            sb = state_tensor[4:5]
+
+            ss_1, sf_1, su_1, si_1, sb_1, q_out = self.timestep_shm(ss,sf,su,si, sb, timestep_params, x_conceptual_timestep,device)
+            updated_state_tensor = torch.cat([ss_1,sf_1,su_1,si_1,sb_1,q_out])
+            return updated_state_tensor
+        
+        return shm
