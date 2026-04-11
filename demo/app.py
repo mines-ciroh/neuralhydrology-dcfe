@@ -5,7 +5,7 @@ from pages.internal_states_and_params import page as internal_states_and_params_
 
 demo = gr.TabbedInterface(
     [streamflow_page, internal_states_and_params_page],
-    ["Streamflow", "States & Parameters"],
+    ["Streamflow", "Internal States & Parameters"],
 )
 
 if __name__ == "__main__":

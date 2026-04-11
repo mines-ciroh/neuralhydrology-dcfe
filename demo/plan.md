@@ -6,10 +6,7 @@ Eventually I will structure the demo modules as follows:
 demos/
 ├── app.py
 ├── theme.py
-├── plots/
-│   ├── streamflow.py      # shared streamflow comparison
-│   ├── shm_states.py      # SHM internal states
-│   └── dcfe_states.py     # dCFE internal states
+├── load_data.py
 └── pages/
     ├── streamflow.py      # main page, streamflow plots for all models
     └── internal_states_and_params.py      # hybrid model explorer

@@ -34,7 +34,7 @@ def plot_streamflow_results(basin: str, epoch: int) -> go.Figure:
     fig.add_trace(go.Scatter(x=dates, y=sim_operational, name="SHM Operational", line=dict(color=NORD["blue"],   width=1.2)))
 
     fig.update_layout(
-        title=f"Basin: {basin}",
+        title=f"Basin {basin}",
         xaxis_title="Date",
         yaxis_title="Streamflow (mm/day)",
         autosize=True,
@@ -75,7 +75,7 @@ with gr.Blocks() as page:
         epoch_dd = gr.Dropdown(choices=list(range(1, 11)), label="Model Epoch", value=10)
 
     plot_out    = gr.Plot(label="Streamflow Comparison", value=plot_streamflow_results(basins[0], 10))
-    metrics_out = gr.Dataframe(label="Performance Metrics")
+    metrics_out = gr.Dataframe(label="Performance Metrics (TODO)")
 
     for inp in [basin_dd, epoch_dd]:
         inp.change(fn=plot_streamflow_results, inputs=[basin_dd, epoch_dd], outputs=plot_out)
