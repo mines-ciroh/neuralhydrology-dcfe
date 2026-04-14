@@ -19,7 +19,7 @@ from neuralhydrology.modelzoo.cfe_modules.timestep_snow_cfe import timestep_snow
 from neuralhydrology.utils.config import Config
 
 
-class SNOWDCFE(BaseConceptualModel):
+class SnowDCFE(BaseConceptualModel):
     """
     Fully differentiable implementation of CFE based upon  https://github.com/NWC-CUAHSI-Summer-Institute/ngen-aridity/blob/main/Project%20Manuscript_LongForm.pdf
     ten parameters are now differentiable, and controlled by an LSTM, not an MLP.
