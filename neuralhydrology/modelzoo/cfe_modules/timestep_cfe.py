@@ -24,7 +24,7 @@ def timestep_cfe(
     soil_config,
     routing_info: RoutingInfo,
     constants,
-):  # enumerate what this returns. If cfe_params is not modified by this function, do not return it.
+) -> tuple[CFEParams, GroundwaterStates, SoilStates, RoutingInfo, Flux]:  # enumerate what this returns. If cfe_params is not modified by this function, do not return it.
     ## INITIALIZE
     # timestep basin constants
     

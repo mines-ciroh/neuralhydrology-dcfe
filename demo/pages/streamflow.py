@@ -22,16 +22,22 @@ def plot_streamflow_results(basin: str, epoch: int) -> go.Figure:
     epoch_key = f"epoch{epoch}"
 
     obs             = SHM_data["SHM_Dynamic"][epoch_key]["predictions"][basin_id]['1D']['xr']['QObs(mm/d)_obs']
-    sim_dynamic     = SHM_data["SHM_Dynamic"][epoch_key]["predictions"][basin_id]['1D']['xr']['QObs(mm/d)_sim']
-    sim_oracle      = SHM_data["SHM_Oracle"][epoch_key]["predictions"][basin_id]['1D']['xr']['QObs(mm/d)_sim']
-    sim_operational = SHM_data["SHM_Operational"][epoch_key]["predictions"][basin_id]['1D']['xr']['QObs(mm/d)_sim']
+    shm_sim_dynamic     = SHM_data["SHM_Dynamic"][epoch_key]["predictions"][basin_id]['1D']['xr']['QObs(mm/d)_sim']
+    shm_sim_oracle      = SHM_data["SHM_Oracle"][epoch_key]["predictions"][basin_id]['1D']['xr']['QObs(mm/d)_sim']
+    shm_sim_operational = SHM_data["SHM_Operational"][epoch_key]["predictions"][basin_id]['1D']['xr']['QObs(mm/d)_sim']
+    dcfe_sim_dynamic     = dCFE_data["dCFE_Dynamic"][epoch_key]["predictions"][basin_id]['1D']['xr']['QObs(mm/d)_sim']
+    dcfe_sim_oracle      = dCFE_data["dCFE_Oracle"][epoch_key]["predictions"][basin_id]['1D']['xr']['QObs(mm/d)_sim']
+    dcfe_sim_operational = dCFE_data["dCFE_Operational"][epoch_key]["predictions"][basin_id]['1D']['xr']['QObs(mm/d)_sim']
     dates = obs['datetime']
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=dates, y=obs,             name="Observed",        line=dict(color=NORD["cyan"],   width=1.5)))
-    fig.add_trace(go.Scatter(x=dates, y=sim_dynamic,     name="SHM Dynamic",     line=dict(color=NORD["green"],  width=1.2)))
-    fig.add_trace(go.Scatter(x=dates, y=sim_oracle,      name="SHM Oracle",      line=dict(color=NORD["yellow"], width=1.2)))
-    fig.add_trace(go.Scatter(x=dates, y=sim_operational, name="SHM Operational", line=dict(color=NORD["blue"],   width=1.2)))
+    fig.add_trace(go.Scatter(x=dates, y=shm_sim_dynamic,     name="SHM Dynamic",     line=dict(color=NORD["green"],  width=1.2)))
+    fig.add_trace(go.Scatter(x=dates, y=shm_sim_oracle,      name="SHM Oracle",      line=dict(color=NORD["yellow"], width=1.2)))
+    fig.add_trace(go.Scatter(x=dates, y=shm_sim_operational, name="SHM Operational", line=dict(color=NORD["blue"],   width=1.2)))
+    fig.add_trace(go.Scatter(x=dates, y=dcfe_sim_dynamic,     name="dCFE Dynamic",     line=dict(color=NORD["green"],  width=1.2), opacity=0.5))
+    fig.add_trace(go.Scatter(x=dates, y=dcfe_sim_oracle,      name="dCFE Oracle",      line=dict(color=NORD["yellow"], width=1.2), opacity=0.5))
+    fig.add_trace(go.Scatter(x=dates, y=dcfe_sim_operational, name="dCFE Operational", line=dict(color=NORD["blue"],   width=1.2), opacity=0.5))
 
     fig.update_layout(
         title=f"Basin {basin}",

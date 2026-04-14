@@ -205,15 +205,178 @@ def plot_SHM_parameters(basin: str, epoch: int) -> go.Figure:
 def plot_dCFE_internal_states(basin: str, epoch: int) -> go.Figure:
     basin_id  = basin.split(":")[0]
     epoch_key = f"epoch{epoch}"
-    fig = go.Figure()
-    # TODO
+
+    all_output_dynamic     = dCFE_data["dCFE_Dynamic"][epoch_key]["all_output"]
+    all_output_operational = dCFE_data["dCFE_Operational"][epoch_key]["all_output"]
+    all_output_oracle      = dCFE_data["dCFE_Oracle"][epoch_key]["all_output"]
+
+    dynamic     = all_output_dynamic[basin_id]
+    operational = all_output_operational[basin_id]
+    oracle      = all_output_oracle[basin_id]
+
+    state_dates = all_output_dynamic["datetime"]
+    state_keys  = list(dynamic["spinup_internal_states"].keys())
+
+    fig = make_subplots(
+        rows=len(state_keys), cols=1,
+        shared_xaxes=True,
+        subplot_titles=state_keys,
+        vertical_spacing=0.05,
+    )
+
+    for i, state in enumerate(state_keys, start=1):
+        show_legend = i == 1
+
+        # Dynamic
+        fig.add_trace(go.Scatter(
+            x=state_dates, y=dynamic["spinup_internal_states"][state],
+            name="Dynamic Spinup", line=dict(color=NORD["blue"], dash="dash", width=1),
+            opacity=0.5, legendgroup="dynamic", showlegend=show_legend,
+        ), row=i, col=1)
+        fig.add_trace(go.Scatter(
+            x=state_dates, y=dynamic["prediction_internal_states"][state],
+            name="Dynamic Prediction", line=dict(color=NORD["blue"], width=1.5),
+            legendgroup="dynamic_pred", showlegend=show_legend,
+        ), row=i, col=1)
+
+        # Oracle
+        fig.add_trace(go.Scatter(
+            x=state_dates, y=oracle["spinup_internal_states"][state],
+            name="Oracle Spinup", line=dict(color=NORD["yellow"], dash="dash", width=1),
+            legendgroup="oracle", showlegend=show_legend,
+        ), row=i, col=1)
+        fig.add_trace(go.Scatter(
+            x=state_dates, y=oracle["prediction_internal_states"][state],
+            name="Oracle Prediction", line=dict(color=NORD["yellow"], width=1.5),
+            opacity=0.5, legendgroup="oracle_pred", showlegend=show_legend,
+        ), row=i, col=1)
+
+        # Operational
+        fig.add_trace(go.Scatter(
+            x=state_dates, y=operational["spinup_internal_states"][state],
+            name="Operational Spinup", line=dict(color=NORD["green"], dash="dash", width=1),
+            opacity=0.5, legendgroup="operational", showlegend=show_legend,
+        ), row=i, col=1)
+        fig.add_trace(go.Scatter(
+            x=state_dates, y=operational["prediction_internal_states"][state],
+            name="Operational Prediction", line=dict(color=NORD["green"], width=1.5),
+            opacity=0.5, legendgroup="operational_pred", showlegend=show_legend,
+        ), row=i, col=1)
+
+        fig.update_yaxes(
+            title_text=f"{state} [mm]",
+            gridcolor=NORD["border"], gridwidth=0.5, zeroline=False,
+            row=i, col=1,
+        )
+
+    fig.update_xaxes(gridcolor=NORD["border"], gridwidth=0.5, zeroline=False)
+    fig.update_layout(
+        title=f"Basin {basin}",
+        height=250 * len(state_keys),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(color=NORD["text"], size=13),
+        legend=dict(
+            orientation="h",
+            x=0.5, y=-0.03,
+            xanchor="center", yanchor="top",
+            bgcolor=NORD["panel2"],
+            bordercolor=NORD["border"],
+            borderwidth=1,
+            font=dict(color=NORD["text"], size=12),
+        ),
+        margin=dict(l=60, r=20, t=50, b=80),
+    )
+
     return fig
+
 
 def plot_dCFE_parameters(basin: str, epoch: int) -> go.Figure:
     basin_id  = basin.split(":")[0]
     epoch_key = f"epoch{epoch}"
-    fig = go.Figure()
-    # TODO
+
+    all_output_dynamic     = dCFE_data["dCFE_Dynamic"][epoch_key]["all_output"]
+    all_output_operational = dCFE_data["dCFE_Operational"][epoch_key]["all_output"]
+    all_output_oracle      = dCFE_data["dCFE_Oracle"][epoch_key]["all_output"]
+
+    dynamic     = all_output_dynamic[basin_id]
+    operational = all_output_operational[basin_id]
+    oracle      = all_output_oracle[basin_id]
+
+    param_dates = all_output_dynamic["datetime"]
+    param_keys  = list(dynamic["spinup_parameters"].keys())
+
+    fig = make_subplots(
+        rows=len(param_keys), cols=1,
+        shared_xaxes=True,
+        subplot_titles=param_keys,
+        vertical_spacing=0.05,
+    )
+
+    for i, param in enumerate(param_keys, start=1):
+        show_legend = i == 1
+
+        # Dynamic
+        fig.add_trace(go.Scatter(
+            x=param_dates, y=dynamic["spinup_parameters"][param],
+            name="Dynamic Spinup", line=dict(color=NORD["blue"], dash="dash", width=1),
+            opacity=0.5, legendgroup="dynamic", showlegend=show_legend,
+        ), row=i, col=1)
+        fig.add_trace(go.Scatter(
+            x=param_dates, y=dynamic["prediction_parameters"][param],
+            name="Dynamic Prediction", line=dict(color=NORD["blue"], width=1.5),
+            legendgroup="dynamic_pred", showlegend=show_legend,
+        ), row=i, col=1)
+
+        # Oracle
+        fig.add_trace(go.Scatter(
+            x=param_dates, y=oracle["spinup_parameters"][param],
+            name="Oracle Spinup", line=dict(color=NORD["yellow"], dash="dash", width=1),
+            legendgroup="oracle", showlegend=show_legend,
+        ), row=i, col=1)
+        fig.add_trace(go.Scatter(
+            x=param_dates, y=oracle["prediction_parameters"][param],
+            name="Oracle Prediction", line=dict(color=NORD["yellow"], width=1.5),
+            opacity=0.5, legendgroup="oracle_pred", showlegend=show_legend,
+        ), row=i, col=1)
+
+        # Operational
+        fig.add_trace(go.Scatter(
+            x=param_dates, y=operational["spinup_parameters"][param],
+            name="Operational Spinup", line=dict(color=NORD["green"], dash="dash", width=1),
+            opacity=0.5, legendgroup="operational", showlegend=show_legend,
+        ), row=i, col=1)
+        fig.add_trace(go.Scatter(
+            x=param_dates, y=operational["prediction_parameters"][param],
+            name="Operational Prediction", line=dict(color=NORD["green"], width=1.5),
+            opacity=0.5, legendgroup="operational_pred", showlegend=show_legend,
+        ), row=i, col=1)
+
+        fig.update_yaxes(
+            title_text=param,
+            gridcolor=NORD["border"], gridwidth=0.5, zeroline=False,
+            row=i, col=1,
+        )
+
+    fig.update_xaxes(gridcolor=NORD["border"], gridwidth=0.5, zeroline=False)
+    fig.update_layout(
+        title=f"Basin {basin}",
+        height=250 * len(param_keys),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(color=NORD["text"], size=13),
+        legend=dict(
+            orientation="h",
+            x=0.5, y=-0.03,
+            xanchor="center", yanchor="top",
+            bgcolor=NORD["panel2"],
+            bordercolor=NORD["border"],
+            borderwidth=1,
+            font=dict(color=NORD["text"], size=12),
+        ),
+        margin=dict(l=60, r=20, t=50, b=80),
+    )
+
     return fig
 
 with gr.Blocks() as page:
