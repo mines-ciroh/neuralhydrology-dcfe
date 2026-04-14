@@ -21,14 +21,14 @@ def timestep_snow_cfe(
     x_conceptual_timestep: torch.Tensor,
     cfe_params: CFEParams,
     snow_cfe_params: Snow_CFEParams,
-    timestep_params: None,  # for consistency changed timestep_parameters --> timestep_params
+    timestep_params: dict | None,  # for consistency changed timestep_parameters --> timestep_params
     snow_reservoir: SnowStates,
     gw_reservoir: GroundwaterStates,
     soil_reservoir: SoilStates,
     soil_config,
     routing_info: RoutingInfo,
     constants,
-):  # enumerate what this returns. If cfe_params is not modified by this function, do not return it.
+)->tuple[Flux, SnowStates, GroundwaterStates, SoilStates, RoutingInfo, Flux]:  # enumerate what this returns. If cfe_params is not modified by this function, do not return it.
     ## INITIALIZE
     # timestep basin constants
     

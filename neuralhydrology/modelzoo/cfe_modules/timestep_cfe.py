@@ -18,7 +18,7 @@ from neuralhydrology.modelzoo.cfe_modules.run_Schaake_subroutine import run_Scha
 def timestep_cfe(
     x_conceptual_timestep: torch.Tensor,
     cfe_params: CFEParams,
-    timestep_params: None,  # for consistency changed timestep_parameters --> timestep_params
+    timestep_params: dict | None,  # for consistency changed timestep_parameters --> timestep_params
     gw_reservoir: GroundwaterStates,
     soil_reservoir: SoilStates,
     soil_config,
