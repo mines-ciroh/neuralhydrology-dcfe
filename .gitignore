@@ -20,6 +20,7 @@ docs/build/*
 *.DS_Store
 
 # demo data files:
-!demo/demo_data/dCFE/*/test/model_epoch*/*.p
-!demo/demo_data/SHM/*/test/model_epoch*/*.p
-!demo/demo_data/LSTM/test/model_epoch*/*.p
+!demo/demo_data/dcfe/*/test/model_epoch*/*.p
+!demo/demo_data/shm/*/test/model_epoch*/*.p
+!demo/demo_data/lstm/test/model_epoch*/*.p
+.gradio/*
