@@ -70,7 +70,7 @@ class BaseDataset(Dataset):
         super(BaseDataset, self).__init__()
         self.cfg = cfg
         self.is_train = is_train
-        if cfg.model == "hybrid_model" and cfg.conceptual_model == "dcfe":
+        if cfg.model == "hybrid_model" and cfg.conceptual_model.lower() in ["dcfe", "snowdcfe"]:
             self._load_conceptual_params()
 
         if period not in ["train", "validation", "test"]:
@@ -196,7 +196,7 @@ class BaseDataset(Dataset):
 
             # grabbing "static_conceptual_params" item in the dictionary
             # Since RHS is a panda df, need to use .loc
-            if self.cfg.model == "hybrid_model" and self.cfg.conceptual_model == "dcfe":
+            if self.cfg.model == "hybrid_model" and self.cfg.conceptual_model.lower() in ["dcfe", "snowdcfe"]:
                 sample["static_conceptual_params"] = self.static_conceptual_params.loc[basin]
 
             # check for static inputs

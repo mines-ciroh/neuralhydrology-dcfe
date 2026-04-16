@@ -35,6 +35,10 @@ class BasinCharacteristics:
     nash_storage: list[int]  # is this the right type?
     giuh_ordinates: list[int]
 
+@dataclass
+class SnowParams:
+    dd: float
+
 
 class CFEParams:
     def __init__(
@@ -66,6 +70,20 @@ class CFEParams:
         self.basin_characteristics.K_lf = timestep_params["K_lf"]
         self.basin_characteristics.K_nash = timestep_params["K_nash"]
 
+class Snow_CFEParams:
+    def __init__(
+        self, device, batch_size
+    ):
+        ones_tensor = torch.ones(batch_size, dtype=torch.float32, device=device)
+        self.snow_params = 0.0 * ones_tensor.clone()
+
+    def update(self, timestep_params: torch.Tensor):
+        """
+        This mimics the functionality of timestep_basin_constants in the original CFE_modules.py, 
+        but for the snow parameters.
+        """
+        self.snow_params.dd = timestep_params["dd"]
+        
 
 class Flux:
     def __init__(self, device, batch_size):
@@ -93,6 +111,8 @@ class Flux:
         self.from_deep_gw_to_chan_m = zero_tensor.clone()
         self.tension_water_m = zero_tensor.clone()
         self.timestep_rainfall_input_m = zero_tensor.clone()
+        self.timestep_snowfall_input_m = zero_tensor.clone()
+        self.timestep_snowmelt_m = zero_tensor.clone()
         self.potential_et_m_per_timestep = zero_tensor.clone()
         self.Qout_m = zero_tensor.clone()
 
@@ -101,7 +121,13 @@ class Flux:
             if flux_name not in ["device", "batch_size"]:
                 setattr(self, flux_name, torch.zeros(self.batch_size, dtype=torch.float32, device=self.device))
 
-
+class SnowStates:
+    def __init__(self, device: str, batch_size: int):
+        self.device = device
+        self.batch_size = batch_size
+        ones_tensor = torch.ones(batch_size, dtype=torch.float32, device=device)
+        self.storage_m = 0.0 * ones_tensor.clone() # start with no snow
+        
 class GroundwaterStates:
     def __init__(self, device: str, batch_size: int, cfe_params: CFEParams):
         self.device = device
@@ -223,10 +249,35 @@ PARAMETER_RANGES = {
     "satpsi": [0.05, 0.95],
 }
 
+SNOW_CFE_PARAMETERS_RANGES = {
+    "satdk": [0.0, 0.000726],  # Saturated hydraulic conductivity [m/hr]
+    "Cgw": [0.0000018, 0.0018],  # Primary groundwater reservoir constant [m/hr]
+    "bb": [0, 21.94],  # exponent on Clapp-Hornberg functin [-]
+    "smcmax": [0.20554, 1],  # Max soil moisture content [m3/hr3]
+    "slop": [0, 1],  # slope coefficient [-]
+    "max_gw_storage": [0.01, 0.25],  # [m]
+    "expon": [1, 8],  # A primary groundwater nonlinear reservoir exponential constant [-]
+    "K_lf": [0, 1],  # Lateral flow coefficient
+    "K_nash": [0, 1],  # Nash cascade discharge coefficient
+    "satpsi": [0.05, 0.95],
+    "dd": [0, 10],  # degree day factor for snowmelt
+}
+
 INITIAL_STATES = {
     "gw_reservoir_storage_m": 0.5,
     "soil_reservoir_storage_m": 0.6,
     "first_nash_storage": 0.0,
+}
+
+INITIAL_STATES_SNOW = {
+    "gw_reservoir_storage_m": 0.5,
+    "soil_reservoir_storage_m": 0.6,
+    "snow_storage_m": 0.0,
+    "flux_giuh_runoff_m": 0.0, #overland (fast) runoff from giuh
+    "flux_nash_lateral_runoff_m": 0.0, # subsurface (slow) flow from nash cascade
+    "flux_from_deep_gw_to_chan_m": 0.0, # baseflow from deep groundwater to channel, or aquifer flow
+    "surface_runoff_depth_m": 0.0, # runoff water that never enters soil
+    "actual_et_m_per_timestep": 0.0, # total ET
 }
 
 
