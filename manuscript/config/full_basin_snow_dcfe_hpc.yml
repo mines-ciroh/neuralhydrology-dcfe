@@ -4,9 +4,12 @@
 experiment_name: full_basin_snow_dcfe_operational
 
 # files to specify training, validation and test basins (relative to code root or absolute path)
-train_basin_file: /home/ziyu/neuralhydrology-dcfe/manuscript/basin_files/full_basin.txt
-validation_basin_file: /home/ziyu/neuralhydrology-dcfe/manuscript/basin_files/full_basin.txt
-test_basin_file: /home/ziyu/neuralhydrology-dcfe/manuscript/basin_files/full_basin.txt
+# train_basin_file: /home/ziyu/neuralhydrology-dcfe/manuscript/basin_files/full_basin.txt
+train_basin_file: /Users/danielmckenzie/Documents/Active_Research/Ziyu/neuralhydrology-dcfe/manuscript/basin_files/full_basin.txt
+#validation_basin_file: /home/ziyu/neuralhydrology-dcfe/manuscript/basin_files/full_basin.txt
+validation_basin_file: /Users/danielmckenzie/Documents/Active_Research/Ziyu/neuralhydrology-dcfe/manuscript/basin_files/full_basin.txt
+# test_basin_file: /home/ziyu/neuralhydrology-dcfe/manuscript/basin_files/full_basin.txt
+test_basin_file: /Users/danielmckenzie/Documents/Active_Research/Ziyu/neuralhydrology-dcfe/manuscript/basin_files/full_basin.txt
 
 # training, validation and test time periods (format = 'dd/mm/yyyy')
 train_start_date: "01/10/2000"
@@ -17,7 +20,7 @@ test_start_date: "01/10/1998"
 test_end_date: "30/09/2002"
 
 # which GPU (id) to use [in format of cuda:0, cuda:1 etc, or cpu or None]
-device: cuda:1
+device: mps
 
 # --- Validation configuration ---------------------------------------------------------------------
 
@@ -123,10 +126,11 @@ seed: 321 # random seed for reproducibility
 dataset: camels_us
 
 # Path to data set root
-data_dir: /home/ziyu/data/CAMELS_US
-#data_dir: /Users/danielmckenzie/Documents/Active_Research/Ziyu/neuralhydrology-dcfe/data/CAMELS_US\
+#data_dir: /home/ziyu/data/CAMELS_US
+data_dir: /Users/danielmckenzie/Documents/Active_Research/Ziyu/neuralhydrology-dcfe/data/CAMELS_US
 
-conceptual_dir: /home/ziyu/data/Conceptual
+# conceptual_dir: /home/ziyu/data/Conceptual
+conceptual_dir: /Users/danielmckenzie/Documents/Active_Research/Ziyu/neuralhydrology-dcfe/data/Conceptual
 # Forcing product [daymet, maurer, maurer_extended, nldas, nldas_extended, nldas_hourly]
 # can be either a list of forcings or a single forcing product
 forcings:
