@@ -131,8 +131,11 @@ class SHMNeuralODE(BaseConceptualModel):
             trajectory_spinup = odeint(func=ode_func,
                                        y0=y0_spinup,
                                        t=t_spinup,
-                                       rtol=1e-3,
-                                       atol=1e-4)  # [spin_up_period, batch_size, 5]
+                                       method='implicit_adams',
+                                       rtol=1e-4,
+                                       atol=1e-5,
+                                       options={'max_iters': 20,
+                                                'max_order': 10})  # [spin_up_period, batch_size, 5]
 
             # Store spin-up states and spin-up q_out
             states["ss"][:, :self.cfg.spin_up_period] = trajectory_spinup[:, :, 0].T
@@ -154,8 +157,11 @@ class SHMNeuralODE(BaseConceptualModel):
         trajectory_prediction = odeint_adjoint(func=ode_func,
                                        y0=y0_prediction,
                                        t=t_prediction,
-                                       rtol=1e-3,
-                                       atol=1e-4)  # [pred_period, batch_size, 5]
+                                       method='implicit_adams',
+                                       rtol=1e-4,
+                                       atol=1e-5,
+                                       options={'max_iters': 20,
+                                                'max_order': 10})  # [pred_period, batch_size, 5]
 
         # store prediction states
         states["ss"][:, self.cfg.spin_up_period:] = trajectory_prediction[:, :, 0].T
