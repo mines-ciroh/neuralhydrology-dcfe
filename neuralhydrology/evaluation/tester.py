@@ -637,9 +637,9 @@ class BaseTester(object):
         # Truncate datetime to match array length (leap years cause minor over-counting)
         first_basin = next(b for b in all_output if b != "datetime")
         if "prediction_parameters" in all_output[first_basin]:
-            arr_len = len(next(iter(all_output[first_basin]["prediction_parameters"].values()))) + len(next(iter(all_output[first_basin]["spinup_parameters"].values()))) + pln
+            arr_len = len(next(iter(all_output[first_basin]["prediction_parameters"].values())))
         else:
-            arr_len = len(next(iter(all_output[first_basin]["prediction_internal_states"].values()))) + len(next(iter(all_output[first_basin]["spinup_internal_states"].values()))) + pln
+            arr_len = len(next(iter(all_output[first_basin]["prediction_internal_states"].values())))
         all_output["datetime"] = all_output["datetime"][:arr_len]
 
         return all_output
