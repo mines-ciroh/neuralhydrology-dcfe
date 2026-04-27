@@ -108,7 +108,11 @@ class DCFE(BaseConceptualModel):
         out[:, timestep_idx, 0] = flux.Qout_m * 1000
         states["gw_reservoir_storage_m"][:, timestep_idx] = gw_reservoir.storage_m
         states["soil_reservoir_storage_m"][:, timestep_idx] = soil_reservoir.storage_m
-        states["first_nash_storage"][:, timestep_idx] = self.cfe_params.basin_characteristics.nash_storage[:, 0]
+        states["flux_giuh_runoff_m"][:, timestep_idx] = flux.giuh_runoff_m
+        states["flux_nash_lateral_runoff_m"][:, timestep_idx] = flux.nash_lateral_runoff_m
+        states["flux_from_deep_gw_to_chan_m"][:, timestep_idx] = flux.from_deep_gw_to_chan_m
+        states["surface_runoff_depth_m"][:, timestep_idx] = flux.surface_runoff_depth_m
+        states["actual_et_m_per_timestep"][:, timestep_idx] = flux.actual_et_m_per_timestep
         return states, out
 
     @property

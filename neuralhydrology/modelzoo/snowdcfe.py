@@ -84,7 +84,7 @@ class SnowDCFE(BaseConceptualModel):
                 )
 
                 ##FINALIZE
-                states, out = self._store_timestep_information(j, flux, snow_reservoir,gw_reservoir, soil_reservoir, states, out)
+                states, out = self._store_timestep_information(j, flux, snow_reservoir, gw_reservoir, soil_reservoir, states, out)
 
         # now run dCFE for prediction. Gradients are tracked.
         for i in range(self.cfg.spin_up_period, lstm_out.shape[1]):

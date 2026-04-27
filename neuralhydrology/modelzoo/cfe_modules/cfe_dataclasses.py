@@ -266,7 +266,11 @@ SNOW_CFE_PARAMETERS_RANGES = {
 INITIAL_STATES = {
     "gw_reservoir_storage_m": 0.5,
     "soil_reservoir_storage_m": 0.6,
-    "first_nash_storage": 0.0,
+    "flux_giuh_runoff_m": 0.0, #overland (fast) runoff from giuh
+    "flux_nash_lateral_runoff_m": 0.0, # subsurface (slow) flow from nash cascade
+    "flux_from_deep_gw_to_chan_m": 0.0, # baseflow from deep groundwater to channel, or aquifer flow
+    "surface_runoff_depth_m": 0.0, # runoff water that never enters soil
+    "actual_et_m_per_timestep": 0.0, # total ET
 }
 
 INITIAL_STATES_SNOW = {

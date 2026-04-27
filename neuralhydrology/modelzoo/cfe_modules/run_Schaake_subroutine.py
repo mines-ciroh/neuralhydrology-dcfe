@@ -27,7 +27,6 @@ def run_Schaake_subroutine(
             - surface_runoff_depth_m (torch.Tensor): Updated surface runoff depth in meters.
             - infiltration_depth_m (torch.Tensor): Updated infiltration depth in meters.
         soil_reservoir: (updated by soil_reservoir.update)
-            - storage_deficit_m (torch.Tensor): Updated soil storage deficit in [m/timestep].
             - Schaake_adjusted_magic_constant_by_soil_type (torch.Tensor): Adjusted magic constant by soil type.
     """
 
