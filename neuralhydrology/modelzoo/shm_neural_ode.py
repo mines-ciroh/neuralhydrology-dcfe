@@ -44,6 +44,22 @@ class SHMNeuralODE(BaseConceptualModel):
     def __init__(self, cfg: Config):
         super(SHMNeuralODE, self).__init__(cfg=cfg)
         
+    def _get_ode_kwargs(self) -> dict:
+        method = self.cfg.ode_method
+        if method == 'implicit_adams':
+            # max_order=4 vs 10: Adams polynomial is O(p) to evaluate; order 4
+            # is ~2.5x cheaper per step and sufficient for smooth hydrology ODEs.
+            # Tolerances loosened 10x vs the research defaults — still tight
+            # enough for physically meaningful state trajectories.
+            return dict(method=method, rtol=1e-3, atol=1e-4,
+                        options={'max_iters': 10, 'max_order': 4})
+        elif method == 'euler':
+            return dict(method=method, options={'step_size': 1.0})
+        else:  # dopri5, rk4, etc.
+            # 10x looser than the research default; dopri5 step-size scales
+            # roughly linearly with rtol so this gives ~5–10x fewer steps.
+            return dict(method=method, rtol=1e-2, atol=1e-3)
+
     def _compute_q(self, trajectory, conceptual_parameters, start_idx, end_idx):
         # trajectory: [time_steps, batch_size, 5]
         
@@ -117,6 +133,8 @@ class SHMNeuralODE(BaseConceptualModel):
                                     conceptual_parameters=conceptual_parameters,
                                     device=device)
 
+        ode_kwargs = self._get_ode_kwargs()
+
         # SPIN UP PERIOD (No gradient tracking)
         with torch.no_grad():
             # spinup period
@@ -126,16 +144,12 @@ class SHMNeuralODE(BaseConceptualModel):
                                     dtype=torch.float32)
             # initial reservoir states
             y0_spinup = torch.stack(tensors=[ss, sf, su, si, sb], dim=-1)  # [batch_size, 5]
-            
+
             # time evolution of storage states
             trajectory_spinup = odeint(func=ode_func,
                                        y0=y0_spinup,
                                        t=t_spinup,
-                                       method='implicit_adams',
-                                       rtol=1e-4,
-                                       atol=1e-5,
-                                       options={'max_iters': 20,
-                                                'max_order': 10})  # [spin_up_period, batch_size, 5]
+                                       **ode_kwargs)  # [spin_up_period, batch_size, 5]
 
             # Store spin-up states and spin-up q_out
             states["ss"][:, :self.cfg.spin_up_period] = trajectory_spinup[:, :, 0].T
@@ -143,7 +157,7 @@ class SHMNeuralODE(BaseConceptualModel):
             states["su"][:, :self.cfg.spin_up_period] = trajectory_spinup[:, :, 2].T
             states["si"][:, :self.cfg.spin_up_period] = trajectory_spinup[:, :, 3].T
             states["sb"][:, :self.cfg.spin_up_period] = trajectory_spinup[:, :, 4].T
-            
+
             q_out[:, :self.cfg.spin_up_period, 0] = self._compute_q(trajectory=trajectory_spinup,
                                                                     conceptual_parameters=conceptual_parameters,
                                                                     start_idx=0,
@@ -152,16 +166,12 @@ class SHMNeuralODE(BaseConceptualModel):
         # PREDICTION PERIOD
         y0_prediction = trajectory_spinup[-1].detach()  # [batch_size, 5]
         t_prediction = torch.arange(self.cfg.spin_up_period, lstm_out.shape[1], device=device, dtype=torch.float32)
-        
+
         # When tracking gradients for training we should use adjoint method to ensure memory doesn't explode.
         trajectory_prediction = odeint_adjoint(func=ode_func,
                                        y0=y0_prediction,
                                        t=t_prediction,
-                                       method='implicit_adams',
-                                       rtol=1e-4,
-                                       atol=1e-5,
-                                       options={'max_iters': 20,
-                                                'max_order': 10})  # [pred_period, batch_size, 5]
+                                       **ode_kwargs)  # [pred_period, batch_size, 5]
 
         # store prediction states
         states["ss"][:, self.cfg.spin_up_period:] = trajectory_prediction[:, :, 0].T
