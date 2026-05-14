@@ -2,12 +2,12 @@
 
 # experiment name, used as folder name
 #experiment_name: testdCFEpetWarm336_run
-experiment_name: Test_Snow_dCFE_Dynamic
+experiment_name: GA_2basins_snowdcfe_dynamic
 
 # files to specify training, validation and test basins (relative to code root or absolute path)
-train_basin_file: 2_basin.txt
-validation_basin_file: 2_basin.txt
-test_basin_file: 2_basin.txt
+train_basin_file: /home/adam/dev/repos/neuralhydrology-dcfe/examples/07-DCFE/GA_2basins.txt
+validation_basin_file: /home/adam/dev/repos/neuralhydrology-dcfe/examples/07-DCFE/GA_2basins.txt
+test_basin_file: /home/adam/dev/repos/neuralhydrology-dcfe/examples/07-DCFE/GA_2basins.txt
 
 # training, validation and test time periods (format = 'dd/mm/yyyy')
 train_start_date: "01/10/2000"
@@ -131,10 +131,8 @@ seed: 123 # random seed for reproducibility
 dataset: camels_us
 
 # Path to data set root
-data_dir: /Users/ziyu/Library/CloudStorage/OneDrive-ColoradoSchoolofMines/Documents/College/ResearchStuff/NextGen/Code/data/CAMELS_US
-#data_dir: /Users/danielmckenzie/Documents/Active_Research/Ziyu/neuralhydrology-dcfe/data/CAMELS_US
-conceptual_dir: /Users/ziyu/Library/CloudStorage/OneDrive-ColoradoSchoolofMines/Documents/College/ResearchStuff/NextGen/Code/data/Conceptual
-#conceptual_dir: /Users/danielmckenzie/Documents/Active_Research/Ziyu/neuralhydrology-dcfe/data/Conceptual
+data_dir: /home/adam/dev/repos/neuralhydrology-dcfe/data/CAMELS_US
+conceptual_dir: /home/adam/dev/repos/neuralhydrology-dcfe/data/Conceptual
 
 # Forcing product [daymet, maurer, maurer_extended, nldas, nldas_extended, nldas_hourly]
 # can be either a list of forcings or a single forcing product
