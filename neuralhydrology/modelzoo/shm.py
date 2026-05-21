@@ -1,8 +1,9 @@
 from typing import Dict, Union
-from neuralhydrology.modelzoo.cfe_modules import get_pet
+
 import torch
 
 from neuralhydrology.modelzoo.baseconceptualmodel import BaseConceptualModel
+from neuralhydrology.modelzoo.cfe_modules import get_pet
 from neuralhydrology.utils.config import Config
 
 
@@ -12,7 +13,7 @@ class SHM(BaseConceptualModel):
     The SHM receives the dynamic parameterization given by a deep learning model. This class has two properties which
     define the initial conditions of the internal states of the model (buckets) and the ranges in which the model
     parameters are allowed to vary during optimization.
-    
+
     Conceptual parameters:
         - dd: snowmelt degree-day factor [mm/°C/day]
         - f_thr: threshold for fastflow reservoir [mm]
@@ -114,7 +115,6 @@ class SHM(BaseConceptualModel):
                 states["si"][:, j] = si
                 states["sb"][:, j] = sb
                 out[:, j, 0] = timestep_out
-            
 
         # Now run model for prediction while traking gradients
         for j in range(self.cfg.spin_up_period, lstm_out.shape[1]):
@@ -243,4 +243,3 @@ class SHM(BaseConceptualModel):
         timestep_out = qf_out + qi_out + qb_out  # [mm]
 
         return ss, sf, su, si, sb, timestep_out
-    
