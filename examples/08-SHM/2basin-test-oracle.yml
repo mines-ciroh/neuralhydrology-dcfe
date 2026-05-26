@@ -5,9 +5,12 @@ experiment_name: example_SHM_oracle_average
 
 # files to specify training, validation and test basins (absolute path)
 # Modify these to your specific absolute path!
-train_basin_file: /home/adam/dev/repos/neuralhydrology-dcfe/examples/08-SHM/2_basin.txt
-validation_basin_file: /home/adam/dev/repos/neuralhydrology-dcfe/examples/08-SHM/2_basin.txt
-test_basin_file: /home/adam/dev/repos/neuralhydrology-dcfe/examples/08-SHM/2_basin.txt
+# train_basin_file: /home/adam/dev/repos/neuralhydrology-dcfe/examples/08-SHM/2_basin.txt
+train_basin_file: /Users/danielmckenzie/Documents/Active_Research/Ziyu/neuralhydrology-dcfe/examples/08-SHM/2_basin.txt
+# validation_basin_file: /home/adam/dev/repos/neuralhydrology-dcfe/examples/08-SHM/2_basin.txt
+validation_basin_file: /Users/danielmckenzie/Documents/Active_Research/Ziyu/neuralhydrology-dcfe/examples/08-SHM/2_basin.txt
+# test_basin_file: /home/adam/dev/repos/neuralhydrology-dcfe/examples/08-SHM/2_basin.txt
+test_basin_file: /Users/danielmckenzie/Documents/Active_Research/Ziyu/neuralhydrology-dcfe/examples/08-SHM/2_basin.txt
 
 # training, validation and test time periods (format = 'dd/mm/yyyy')
 train_start_date: "01/10/2000"
@@ -128,7 +131,8 @@ dataset: camels_us
 
 # Path to data set root
 # Modify this to your specific absolute path!
-data_dir: /home/adam/dev/repos/neuralhydrology-dcfe/data/CAMELS_US
+# data_dir: /home/adam/dev/repos/neuralhydrology-dcfe/data/CAMELS_US
+data_dir: /Users/danielmckenzie/Documents/Active_Research/Ziyu/neuralhydrology-dcfe/data/CAMELS_US
 
 # Forcing product [daymet, maurer, maurer_extended, nldas, nldas_extended, nldas_hourly]
 # can be either a list of forcings or a single forcing product
