@@ -5,6 +5,7 @@
 !test/test_data/*.p
 *.swp
 .coverage
+.python-version
 
 # folder
 build/*
@@ -18,3 +19,8 @@ configs/*
 data/*
 docs/build/*
 *.DS_Store
+neuralhydrology_dcfe.egg-info/*
+
+pyproject.toml
+main.py
+

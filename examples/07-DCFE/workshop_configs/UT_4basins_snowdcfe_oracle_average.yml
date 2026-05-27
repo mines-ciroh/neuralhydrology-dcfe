@@ -2,12 +2,12 @@
 
 # experiment name, used as folder name
 #experiment_name: testdCFEpetWarm336_run
-experiment_name: DevMultiBasin_Test_Dynamic
+experiment_name: UT_4basins_snowdcfe_oracle_average
 
 # files to specify training, validation and test basins (relative to code root or absolute path)
-train_basin_file: 2_basin.txt
-validation_basin_file: 2_basin.txt
-test_basin_file: 2_basin.txt
+train_basin_file: /home/adam/dev/repos/neuralhydrology-dcfe/examples/07-DCFE/UT_4basins.txt
+validation_basin_file: /home/adam/dev/repos/neuralhydrology-dcfe/examples/07-DCFE/UT_4basins.txt
+test_basin_file: /home/adam/dev/repos/neuralhydrology-dcfe/examples/07-DCFE/UT_4basins.txt
 
 # training, validation and test time periods (format = 'dd/mm/yyyy')
 train_start_date: "01/10/2000"
@@ -30,7 +30,7 @@ device: cpu
 # --- Validation configuration ---------------------------------------------------------------------
 
 # specify after how many epochs to perform validation
-validate_every: 2
+validate_every: 3
 
 # specify how many random basins to use for validation
 validate_n_random_basins: 1
@@ -47,13 +47,13 @@ metrics:
 # (has to match the if statement in modelzoo/__init__.py)
 model: hybrid_model
 
-conceptual_model: dcfe
+conceptual_model: snowdcfe
 
 # dcfe speicifc settings
 dcfe_soil_scheme: classic # classic or ode, ode is not implemented yet
 dcfe_partition_scheme: Schaake # Schaake or Xinanjiang, Xinanjiang is not implemented yet
 dcfe_hourly: False # Daily, hourly is bad
-conceptual_param_config: dynamic # dynamic, operational_average, oracle_average
+conceptual_param_config: oracle_average # dynamic, operational_average, oracle_average
 
 
 # prediction head [regression]. Define the head specific parameters below
@@ -92,7 +92,7 @@ learning_rate:
 batch_size: 256
 
 # Number of training epochs
-epochs: 4
+epochs: 30
 
 # If a value, clips the gradients during training to that norm.
 clip_gradient_norm: 1
@@ -131,9 +131,11 @@ seed: 123 # random seed for reproducibility
 dataset: camels_us
 
 # Path to data set root
-data_dir: /Users/ziyu/Library/CloudStorage/OneDrive-ColoradoSchoolofMines/Documents/College/ResearchStuff/NextGen/Code/data/CAMELS_US
+data_dir: /home/adam/dev/repos/neuralhydrology-dcfe/data/CAMELS_US
+#data_dir: /Users/ziyu/Library/CloudStorage/OneDrive-ColoradoSchoolofMines/Documents/College/ResearchStuff/NextGen/Code/data/CAMELS_US
 #data_dir: /Users/danielmckenzie/Documents/Active_Research/Ziyu/neuralhydrology-dcfe/data/CAMELS_US
-conceptual_dir: /Users/ziyu/Library/CloudStorage/OneDrive-ColoradoSchoolofMines/Documents/College/ResearchStuff/NextGen/Code/data/Conceptual
+conceptual_dir: /home/adam/dev/repos/neuralhydrology-dcfe/data/Conceptual
+#conceptual_dir: /Users/ziyu/Library/CloudStorage/OneDrive-ColoradoSchoolofMines/Documents/College/ResearchStuff/NextGen/Code/data/Conceptual
 #conceptual_dir: /Users/danielmckenzie/Documents/Active_Research/Ziyu/neuralhydrology-dcfe/data/Conceptual
 
 # Forcing product [daymet, maurer, maurer_extended, nldas, nldas_extended, nldas_hourly]
