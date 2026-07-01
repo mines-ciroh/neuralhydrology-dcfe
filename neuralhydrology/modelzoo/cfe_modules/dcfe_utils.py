@@ -28,7 +28,7 @@ def get_dcfe_params(cfg):
         calibrated_params_dir = cfg.conceptual_dir / "CFE_Calibrated_Config" / "runs"
 
     # --- get all the basin ids as strings ---
-    basins = utils.load_basin_file(getattr(cfg, "train_basin_file"))
+    basins = _load_master_basin_list(cfg)
 
     col_keys = KEYS["soil"] + KEYS["basin_characteristics"]
     df = pd.DataFrame(index=basins, columns=col_keys)
@@ -189,3 +189,25 @@ def move_data_to_device(
         elif not key.startswith("date"):
             data[key] = data[key].to(device)
     return data
+
+def _load_master_basin_list(cfg) -> List[str]:
+    """Load in all of the basins from the NH config file into one List[str]"""
+    # get basin files from cfg. if the key does not exist or value is empty,
+    # default to None type. 
+    basin_files = [
+        getattr(cfg, "train_basin_file", None),
+        getattr(cfg, "validation_basin_file", None),
+        getattr(cfg, "test_basin_file", None),
+    ]
+
+    basins = []
+    for basin_file in basin_files:
+        if basin_file is not None:
+            # load_basin_file returns a list of strings
+            # extend appends each item in the list to the the basins list
+            basins.extend(utils.load_basin_file(basin_file))
+
+    # keep 8-character basin IDs, remove duplicates, sort
+    basins = sorted(set(str(b).zfill(8) for b in basins))
+    
+    return basins
