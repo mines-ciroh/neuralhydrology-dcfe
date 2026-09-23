@@ -72,6 +72,11 @@ class BaseConceptualModel(nn.Module):
             for k in dynamic_parameters.keys():
                 mean_vals = dynamic_parameters[k].mean(dim=1, keepdim=True)
                 conceptual_param[k] = mean_vals.expand_as(dynamic_parameters[k])
+        elif self.cfg.conceptual_param_config == "oracle_one":
+            conceptual_param = {}
+            for k in dynamic_parameters.keys():
+                one_vals = dynamic_parameters[k][:, -1:] # taking the last value of the output sequence
+                conceptual_param[k] = one_vals.expand_as(dynamic_parameters[k])
         else:
             raise NotImplementedError(
                 f"Conceptual parameter configuration {self.cfg.conceptual_param_config} invalid. Choose from 'dynamic', 'operational_average', or 'oracle_average'."
