@@ -1,7 +1,5 @@
-from typing import Dict, Tuple, Union
-
 import torch
-import torch.nn as nn
+from torch import nn
 
 from neuralhydrology.utils.config import Config
 
@@ -20,19 +18,17 @@ class BaseConceptualModel(nn.Module):
     """
 
     def __init__(self, cfg: Config):
-        super(BaseConceptualModel, self).__init__()
+        super().__init__()
         self.cfg = cfg
         # Check if the dynamic_conceptual_inputs and the target_variables are in the custom normalization. This is
         # necessary as conceptual models are mass conservative.
         if any(item not in cfg.custom_normalization for item in cfg.dynamic_conceptual_inputs + cfg.target_variables):
             raise RuntimeError("dynamic_conceptual_inputs and target_variables require custom_normalization")
 
-    def forward(
-        self, x_conceptual: torch.Tensor, lstm_out: torch.Tensor
-    ) -> Dict[str, Union[torch.Tensor, Dict[str, torch.Tensor]]]:
+    def forward(self, x_conceptual: torch.Tensor, lstm_out: torch.Tensor) -> dict[str, torch.Tensor | dict[str, torch.Tensor]]:
         raise NotImplementedError
 
-    def _get_dynamic_parameters_conceptual(self, lstm_out: torch.Tensor) -> Dict[str, torch.Tensor]:
+    def _get_dynamic_parameters_conceptual(self, lstm_out: torch.Tensor) -> dict[str, torch.Tensor]:
         """Map the output of the data-driven part of the predefined ranges of the conceptual model that is being used.
 
         Parameters
@@ -56,7 +52,7 @@ class BaseConceptualModel(nn.Module):
 
         return dynamic_parameters
 
-    def _form_conceptual_input_param(self, dynamic_parameters: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+    def _form_conceptual_input_param(self, dynamic_parameters: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
         """
         Note each torch.Tensor is of size [batch_size, time_steps]
         """
@@ -64,32 +60,39 @@ class BaseConceptualModel(nn.Module):
             conceptual_param = dynamic_parameters
         elif self.cfg.conceptual_param_config == "operational_average":
             conceptual_param = {}
-            for k in dynamic_parameters.keys():
+            for k in dynamic_parameters:
                 mean_vals = dynamic_parameters[k][:, : (self.cfg.spin_up_period - 1)].mean(dim=1, keepdim=True)
                 conceptual_param[k] = mean_vals.expand_as(dynamic_parameters[k])
         elif self.cfg.conceptual_param_config == "operational_one":
             conceptual_param = {}
-            for k in dynamic_parameters.keys():
-                one_vals = dynamic_parameters[k][:, (self.cfg.spin_up_period - 1):self.cfg.spin_up_period]  # taking the last value of the spin-up period
+            for k in dynamic_parameters:
+                one_vals = dynamic_parameters[k][
+                    :, (self.cfg.spin_up_period - 1) : self.cfg.spin_up_period
+                ]  # taking the last value of the spin-up period
                 conceptual_param[k] = one_vals.expand_as(dynamic_parameters[k])
         elif self.cfg.conceptual_param_config == "operational_max":
             conceptual_param = {}
-            for k in dynamic_parameters.keys():
+            for k in dynamic_parameters:
                 max_vals = dynamic_parameters[k][:, : (self.cfg.spin_up_period - 1)].max(dim=1, keepdim=True).values
                 conceptual_param[k] = max_vals.expand_as(dynamic_parameters[k])
         elif self.cfg.conceptual_param_config == "oracle_average":
             conceptual_param = {}
-            for k in dynamic_parameters.keys():
+            for k in dynamic_parameters:
                 mean_vals = dynamic_parameters[k].mean(dim=1, keepdim=True)
+                conceptual_param[k] = mean_vals.expand_as(dynamic_parameters[k])
+        elif self.cfg.conceptual_param_config == "op_av_seasonal":
+            conceptual_param = {}
+            for k in dynamic_parameters:
+                mean_vals = dynamic_parameters[k][:, : self.cfg.predict_last_n].mean(dim=1, keepdim=True)
                 conceptual_param[k] = mean_vals.expand_as(dynamic_parameters[k])
         elif self.cfg.conceptual_param_config == "oracle_one":
             conceptual_param = {}
-            for k in dynamic_parameters.keys():
-                one_vals = dynamic_parameters[k][:, -1:] # taking the last value of the output sequence
+            for k in dynamic_parameters:
+                one_vals = dynamic_parameters[k][:, -1:]  # taking the last value of the output sequence
                 conceptual_param[k] = one_vals.expand_as(dynamic_parameters[k])
         elif self.cfg.conceptual_param_config == "oracle_max":
             conceptual_param = {}
-            for k in dynamic_parameters.keys():
+            for k in dynamic_parameters:
                 max_vals = dynamic_parameters[k].max(dim=1, keepdim=True).values
                 conceptual_param[k] = max_vals.expand_as(dynamic_parameters[k])
         else:
@@ -99,7 +102,7 @@ class BaseConceptualModel(nn.Module):
 
         return conceptual_param
 
-    def _initialize_information(self, conceptual_inputs: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], torch.Tensor]:
+    def _initialize_information(self, conceptual_inputs: torch.Tensor) -> tuple[dict[str, torch.Tensor], torch.Tensor]:
         """Initialize the structures to store the time evolution of the internal states and the outflow of the conceptual
         model
 

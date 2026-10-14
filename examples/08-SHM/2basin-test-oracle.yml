@@ -1,7 +1,7 @@
 # --- Experiment configurations --------------------------------------------------------------------
 
 # experiment name, used as folder name
-experiment_name: example_SHM_oracle_average
+experiment_name: SHM_10basin_seasonal_operational_average
 
 # files to specify training, validation and test basins (absolute path)
 # Modify these to your specific absolute path!
@@ -25,7 +25,7 @@ test_end_date: "30/09/2004"
 #test_end_date: "30/09/2000"
 
 # which GPU (id) to use [in format of cuda:0, cuda:1 etc, or cpu or None]
-device: cpu
+device: mps
 
 # --- Validation configuration ---------------------------------------------------------------------
 
@@ -50,7 +50,7 @@ model: hybrid_model
 conceptual_model: shm
 
 # One of [dynamic, operational_average, oracle_average]
-conceptual_param_config: oracle_average
+conceptual_param_config: op_av_seasonal
 
 # prediction head [regression]. Define the head specific parameters below
 head: regression
@@ -95,10 +95,10 @@ clip_gradient_norm: 1
 
 # Defines which time steps are used to calculate the loss. Can't be larger than seq_length.
 # If use_frequencies is used, this needs to be a dict mapping each frequency to a predict_last_n-value, else an int.
-predict_last_n: 365
+predict_last_n: 100
 
 # Length of the input sequence
-seq_length: 910 # Must be predict_last_n + warmup_period + spinup_period
+seq_length: 645 # Must be predict_last_n + warmup_period + spinup_period
 
 warmup_period: 180 # For the LSTM model
 
