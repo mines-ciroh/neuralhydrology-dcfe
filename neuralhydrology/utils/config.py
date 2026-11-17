@@ -285,7 +285,17 @@ class Config(object):
     @property
     def conceptual_param_config(self) -> dict:
         return self._cfg.get("conceptual_param_config", "dynamic")
-    
+
+    @property
+    def conceptual_param_network(self) -> str:
+        """Network that predicts the conceptual parameters: 'lstm' (dynamic, from forcings) or 'mlp' (static, from attributes)."""
+        return self._cfg.get("conceptual_param_network", "lstm")
+
+    @property
+    def conceptual_mlp_hiddens(self) -> List[int]:
+        """Hidden layer sizes of the parameter MLP (the output layer size is added automatically)."""
+        return self._as_default_list(self._cfg.get("conceptual_mlp_hiddens", [64, 32]))
+
     #____end of new for dCFE____
     
     @property
